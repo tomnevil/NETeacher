@@ -1,5 +1,5 @@
 import request from './request'
-import type { Result, QuizQuestion, AssessmentResult, WrongQuestion } from './types'
+import type { Result, QuizQuestion, AssessmentResult, WrongQuestion, DimensionScore } from './types'
 
 /** 抽取一组测评题目（含 subject / level 可选筛选） */
 export function getQuiz(params?: { subject?: string; level?: number }) {

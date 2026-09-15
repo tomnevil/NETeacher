@@ -103,11 +103,11 @@ export default function Placement() {
       ))}
 
       <button
-        disabled={submit.isLoading || questions.length === 0}
+        disabled={submit.isPending || questions.length === 0}
         onClick={() => submit.mutate()}
         className="w-full rounded-full bg-gradient-to-r from-sky-400 to-brand-600 py-3.5 font-semibold text-white shadow-soft disabled:opacity-50"
       >
-        {submit.isLoading ? '判分中…' : '提交并定级'}
+        {submit.isPending ? '判分中…' : '提交并定级'}
       </button>
     </div>
   )
