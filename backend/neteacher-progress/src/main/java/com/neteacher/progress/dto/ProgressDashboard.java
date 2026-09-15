@@ -12,6 +12,8 @@ import java.util.Map;
 public class ProgressDashboard {
     /** 综合等级 L1-L6 */
     private int overallLevel;
+    /** 入学测评定级得到的初始级别 L1-L6（null 表示尚未定级） */
+    private Integer initLevel;
     /** 各科学情 {subject: score} */
     private Map<String, Integer> mastery;
     /** 连续打卡天数 */

@@ -193,6 +193,34 @@ export interface LevelInfo {
   completedCount: number
   firstCourseId?: number | null
   firstCourseTitle?: string | null
+  /** 入学测评定级得到的初始级别 L1-L6（null 表示尚未定级） */
+  initLevel?: number | null
+}
+
+export interface PlacementQuestion {
+  id: string
+  type: 'VOCAB' | 'LISTENING'
+  prompt: string
+  audioHint?: string | null
+  options: string[]
+  level: number
+}
+
+export interface PlacementAnswer {
+  questionId: string
+  selected: number
+}
+
+export interface PlacementSubmit {
+  answers: PlacementAnswer[]
+}
+
+export interface PlacementResult {
+  initLevel: number
+  score: number
+  total: number
+  correct: number
+  band: string
 }
 
 export interface TopicInfo {
@@ -307,4 +335,15 @@ export interface SpeakingEvalResult {
   phonemes: PhonemeMark[]
   waveformRef: number[]
   waveformUser: number[]
+}
+
+export interface DimensionScore {
+  dimension: string
+  label: string
+  score: number
+}
+
+export interface ForbiddenHours {
+  forbiddenStart: number
+  forbiddenEnd: number
 }

@@ -1,6 +1,7 @@
 package com.neteacher.assessment.controller;
 
 import com.neteacher.assessment.dto.AssessmentResult;
+import com.neteacher.assessment.dto.DimensionScore;
 import com.neteacher.assessment.dto.QuizQuestion;
 import com.neteacher.assessment.dto.QuizSubmitRequest;
 import com.neteacher.assessment.dto.WrongQuestion;
@@ -53,6 +54,12 @@ public class AssessmentController {
     @Operation(summary = "错题本：聚合所有测评中答错的题目")
     public Result<List<WrongQuestion>> wrongBook(HttpServletRequest request) {
         return Result.success(assessmentService.wrongBook(currentUid(request)));
+    }
+
+    @GetMapping("/ability")
+    @Operation(summary = "能力雷达图：各维度最新得分")
+    public Result<List<DimensionScore>> ability(HttpServletRequest request) {
+        return Result.success(assessmentService.abilityRadar(currentUid(request)));
     }
 
     private Long currentUid(HttpServletRequest request) {

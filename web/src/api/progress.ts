@@ -1,5 +1,5 @@
 import request from './request'
-import type { Result, ProgressDashboard, HomeToday, LevelInfo, CheckInStatus } from './types'
+import type { Result, ProgressDashboard, HomeToday, LevelInfo, CheckInStatus, ForbiddenHours } from './types'
 
 /** 学习仪表盘 */
 export function getDashboard() {
@@ -24,4 +24,9 @@ export function getCheckIn() {
 /** 今日打卡 */
 export function doCheckIn() {
   return request.post<Result<CheckInStatus>>('/home/checkin')
+}
+
+/** 防沉迷禁止时段（21:00 - 次日 08:00 不可学习） */
+export function getForbiddenHours() {
+  return request.get<Result<ForbiddenHours>>('/progress/forbidden-hours')
 }

@@ -6,6 +6,8 @@ import com.neteacher.common.util.JwtUtil;
 import com.neteacher.learning.entity.LearningRecord;
 import com.neteacher.learning.repository.LearningRecordRepository;
 import com.neteacher.progress.dto.ProgressDashboard;
+import com.neteacher.user.entity.StudentProfile;
+import com.neteacher.user.repository.StudentProfileRepository;
 import org.springframework.stereotype.Service;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,15 +26,18 @@ public class ProgressService {
     private final AssessmentRepository assessmentRepo;
     private final LearningRecordRepository recordRepo;
     private final JwtUtil jwtUtil;
+    private final StudentProfileRepository profileRepo;
 
-    public ProgressService(AssessmentRepository assessmentRepo, LearningRecordRepository recordRepo, JwtUtil jwtUtil) {
+    public ProgressService(AssessmentRepository assessmentRepo, LearningRecordRepository recordRepo, JwtUtil jwtUtil, StudentProfileRepository profileRepo) {
         this.assessmentRepo = assessmentRepo;
         this.recordRepo = recordRepo;
         this.jwtUtil = jwtUtil;
+        this.profileRepo = profileRepo;
     }
 
     public ProgressDashboard dashboard(HttpServletRequest request) {
         Long uid = currentUid(request);
+        StudentProfile profile = profileRepo.findByStudentId(uid).orElse(null);
         List<Assessment> asms = assessmentRepo.findByUserIdOrderByCreatedAtDesc(uid);
         List<LearningRecord> records = recordRepo.findByUserId(uid);
 
@@ -40,7 +45,18 @@ public class ProgressService {
         int avg = mastery.isEmpty()
                 ? 0
                 : (int) Math.round(mastery.values().stream().mapToInt(Integer::intValue).average().orElse(0));
-        int overallLevel = levelFromScore(avg == 0 ? 60 : avg);
+        int overallLevel;
+        if (mastery.isEmpty()) {
+            // 无测评记录：以入学测评定级基线（init_level，已是级别 1-6）作为起始级别；未定级则回退默认 L2
+            if (profile != null && profile.getInitLevel() != null) {
+                int lv = profile.getInitLevel();
+                overallLevel = Math.min(6, Math.max(1, lv));
+            } else {
+                overallLevel = levelFromScore(60);
+            }
+        } else {
+            overallLevel = levelFromScore(avg);
+        }
 
         int totalMinutes = records.stream()
                 .mapToInt(r -> r.getDurationSec() == null ? 0 : r.getDurationSec())
@@ -59,6 +75,7 @@ public class ProgressService {
 
         ProgressDashboard d = new ProgressDashboard();
         d.setOverallLevel(overallLevel);
+        d.setInitLevel(profile != null ? profile.getInitLevel() : null);
         d.setMastery(mastery);
         d.setStreakDays(streakDays(records));
         d.setTotalMinutes(totalMinutes);

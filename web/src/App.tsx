@@ -19,6 +19,8 @@ import TeacherDashboard from './pages/TeacherDashboard'
 import ClassAdmin from './pages/ClassAdmin'
 import StudentRoster from './pages/StudentRoster'
 import NotFound from './pages/NotFound'
+import Placement from './pages/Placement'
+import Exercise from './pages/Exercise'
 
 export default function App() {
   return (
@@ -51,6 +53,8 @@ export default function App() {
         <Route index element={<Navigate to="/home" replace />} />
         <Route path="home" element={<Home />} />
         <Route path="map" element={<LearningMap />} />
+        <Route path="placement" element={<Placement />} />
+        <Route path="exercise" element={<Exercise />} />
         <Route path="assessment" element={<Assessment />} />
         <Route path="wrong" element={<WrongBook />} />
         <Route path="path" element={<LearningPath />} />

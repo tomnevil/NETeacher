@@ -2,6 +2,7 @@ package com.neteacher.assessment.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.neteacher.assessment.dto.AssessmentResult;
+import com.neteacher.assessment.dto.DimensionScore;
 import com.neteacher.assessment.dto.QuizQuestion;
 import com.neteacher.assessment.dto.QuizSubmitRequest;
 import com.neteacher.assessment.dto.WrongQuestion;
@@ -127,6 +128,30 @@ public class AssessmentService {
         return assessmentRepo.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(this::toResult)
                 .collect(Collectors.toList());
+    }
+
+    /** 能力雷达图：聚合各维度最新一次测评得分（0-100），未测维度记 0 */
+    public List<DimensionScore> abilityRadar(Long userId) {
+        List<Assessment> list = assessmentRepo.findByUserIdOrderByCreatedAtDesc(userId);
+        Map<String, Integer> latest = new LinkedHashMap<>();
+        for (Assessment a : list) {
+            if (a.getSubject() != null && !latest.containsKey(a.getSubject())) {
+                latest.put(a.getSubject(), a.getScore() == null ? 0 : a.getScore());
+            }
+        }
+        String[][] dims = {
+            {"listening", "听力"}, {"speaking", "口语"}, {"reading", "阅读"},
+            {"writing", "写作"}, {"word", "单词"}, {"grammar", "语法"}
+        };
+        List<DimensionScore> res = new ArrayList<>();
+        for (String[] d : dims) {
+            DimensionScore ds = new DimensionScore();
+            ds.setDimension(d[0]);
+            ds.setLabel(d[1]);
+            ds.setScore(latest.getOrDefault(d[0], 0));
+            res.add(ds);
+        }
+        return res;
     }
 
     /** 错题本：聚合该用户所有测评中答错的题目（同题保留最新一次） */

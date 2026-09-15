@@ -25,3 +25,8 @@ export function getWrongBook() {
 export function listAssessments() {
   return request.get<Result<AssessmentResult[]>>('/assessments')
 }
+
+/** 能力雷达图：各维度最新得分 */
+export function getAbility() {
+  return request.get<Result<DimensionScore[]>>('/assessments/ability')
+}

@@ -93,7 +93,13 @@ export default function SpecialTraining() {
           {courses?.map((c) => (
             <button
               key={c.id}
-              onClick={() => nav(`/speaking?courseId=${c.id}`)}
+              onClick={() =>
+                nav(
+                  c.topic === 'SPEAKING'
+                    ? `/speaking?courseId=${c.id}`
+                    : `/exercise?subject=${(c.topic ?? 'word').toLowerCase()}`
+                )
+              }
               className="flex items-center gap-4 rounded-3xl border border-brand-100 bg-white p-4 text-left shadow-soft transition hover:shadow-lg active:scale-[0.99]"
             >
               <span

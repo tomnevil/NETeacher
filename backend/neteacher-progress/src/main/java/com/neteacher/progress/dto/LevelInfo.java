@@ -6,6 +6,8 @@ import lombok.Data;
 public class LevelInfo {
     private String lv;
     private String name;
+    /** 入学测评定级得到的初始级别 L1-L6（null 表示尚未定级） */
+    private Integer initLevel;
     private boolean unlocked;
     private int stars;
     private boolean current;

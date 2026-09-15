@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { getLevels } from '../api/progress'
+import { getLevels, getForbiddenHours } from '../api/progress'
 import type { LevelInfo } from '../api/types'
 
 /** 每个关卡的装饰 emoji（呼应概念图氛围） */
@@ -48,6 +48,11 @@ export default function LearningMap() {
   const { data, isLoading } = useQuery({
     queryKey: ['levels'],
     queryFn: () => getLevels().then((r) => r.data.data)
+  })
+
+  const { data: fh } = useQuery({
+    queryKey: ['forbidden-hours'],
+    queryFn: () => getForbiddenHours().then((r) => r.data.data)
   })
 
   const levels = data ?? []
@@ -124,6 +129,39 @@ export default function LearningMap() {
           </div>
         </div>
       </header>
+
+      {/* 入学定级引导 */}
+      {levels.length > 0 && levels[0]?.initLevel == null && (
+        <div className="px-4 md:px-10">
+          <div className="mx-auto max-w-3xl rounded-3xl border border-dashed border-brand-300 bg-brand-50 p-4 text-center">
+            <div className="text-sm font-bold text-brand-800">尚未完成入学测评定级</div>
+            <div className="mt-1 text-xs text-ink-soft">
+              完成几道词汇 / 听力题，为你匹配更准确的起点级别并解锁对应关卡。
+            </div>
+            <button
+              onClick={() => nav('/placement')}
+              className="mt-3 rounded-full bg-gradient-to-r from-sky-400 to-brand-600 px-5 py-2 text-sm font-semibold text-white shadow-soft"
+            >
+              去定级
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 防沉迷提示 */}
+      {fh && (
+        <div className="px-4 md:px-10">
+          <div className="mx-auto flex max-w-3xl items-center gap-3 rounded-3xl border border-amber-200 bg-amber-50 p-4">
+            <span className="text-2xl">🌙</span>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-bold text-amber-800">健康护眼时段</div>
+              <div className="mt-0.5 text-xs text-amber-700">
+                每日 {fh.forbiddenStart}:00 至次日 {fh.forbiddenEnd}:00 为休息时段，系统将暂停练习以守护视力与作息。
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 上升式动态地图 */}
       <div className="relative px-4 md:px-10">

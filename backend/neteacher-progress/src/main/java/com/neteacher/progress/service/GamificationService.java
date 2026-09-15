@@ -91,7 +91,9 @@ public class GamificationService {
     public List<LevelInfo> getLevels(HttpServletRequest request) {
         Long uid = currentUid(request);
         Integer grade = gradeOf(uid);
-        int current = clampLevel(progressService.dashboard(request).getOverallLevel());
+        ProgressDashboard dash = progressService.dashboard(request);
+        int current = clampLevel(dash.getOverallLevel());
+        Integer initLevel = dash.getInitLevel();
         Set<Long> completed = completedCourseIds(uid);
         List<LevelInfo> out = new ArrayList<>();
         for (int lv = 1; lv <= 6; lv++) {
@@ -111,6 +113,7 @@ public class GamificationService {
             info.setCourseCount(total);
             info.setCompletedCount(done);
             info.setStars(stars);
+            info.setInitLevel(initLevel);
             firstUnfinishedCourse(courses, completed).ifPresent(c -> {
                 info.setFirstCourseId(c.getId());
                 info.setFirstCourseTitle(c.getTitle());

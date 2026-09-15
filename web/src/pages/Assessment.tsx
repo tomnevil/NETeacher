@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import Card from '../components/ui/Card'
 import { useQuery } from '@tanstack/react-query'
-import { getQuiz, submitQuiz, listAssessments } from '../api/assessment'
-import type { QuizQuestion, AssessmentResult } from '../api/types'
+import { getQuiz, submitQuiz, listAssessments, getAbility } from '../api/assessment'
+import type { QuizQuestion, AssessmentResult, DimensionScore } from '../api/types'
+import RadarChart from '../components/RadarChart'
 
 const SUBJECTS: { value: string; label: string }[] = [
   { value: '', label: '全部（随机）' },
@@ -28,6 +29,10 @@ export default function Assessment() {
   const { data: history, refetch: refetchHistory } = useQuery({
     queryKey: ['assessments'],
     queryFn: () => listAssessments().then((r) => r.data.data)
+  })
+  const { data: ability } = useQuery({
+    queryKey: ['ability'],
+    queryFn: () => getAbility().then((r) => r.data.data)
   })
 
   const startQuiz = async () => {
@@ -106,13 +111,25 @@ export default function Assessment() {
                   ))}
                 </select>
               </div>
-              <button
-                onClick={startQuiz}
-                disabled={submitting}
-                className="bg-brand-600 hover:bg-brand-700 text-white rounded-2xl px-6 py-2.5 disabled:opacity-50"
-              >
-                {submitting ? '加载中…' : '开始测评'}
-              </button>
+                {ability && ability.length > 0 && (
+                  <div className="mb-4 rounded-2xl border border-brand-100 bg-white p-4">
+                    <div className="mb-2 text-sm font-semibold text-brand-800">
+                      📊 能力雷达图（各维度最新得分）
+                    </div>
+                    <div className="flex justify-center">
+                      <RadarChart
+                        data={ability.map((d: DimensionScore) => ({ label: d.label, score: d.score }))}
+                      />
+                    </div>
+                  </div>
+                )}
+                <button
+                  onClick={startQuiz}
+                  disabled={submitting}
+                  className="bg-brand-600 hover:bg-brand-700 text-white rounded-2xl px-6 py-2.5 disabled:opacity-50"
+                >
+                  {submitting ? '加载中…' : '开始测评'}
+                </button>
             </>
           ) : (
             <ResultView
