@@ -1,0 +1,8 @@
+﻿health_up=True
+student login OK
+bind-status bound=True parent=æ¼ç¤ºå®¶é¿
+submit score=100 total=3 comment_len=271
+recommend: L=4->5 items=2 mastery=
+parent children=1 first=æ¼ç¤ºå­¦å
+report: assessments=2 records=1 mastery_keys= comment_len=204
+=== DONE ===

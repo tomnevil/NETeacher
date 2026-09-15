@@ -1,0 +1,52 @@
+version: "3.8"
+
+# 本地依赖服务：MySQL / Redis / MongoDB
+# 启动：docker compose up -d
+# 停止：docker compose down   （保留数据）；docker compose down -v （清除数据卷）
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: neteacher-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: neteacher
+      MYSQL_USER: neteacher
+      MYSQL_PASSWORD: neteacher123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pneteacher123"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - neteacher
+
+  redis:
+    image: redis:7
+    container_name: neteacher-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - neteacher
+
+  mongo:
+    image: mongo:7
+    container_name: neteacher-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - neteacher
+
+volumes:
+  mysql-data:
+  mongo-data:
+
+networks:
+  neteacher:
+    driver: bridge

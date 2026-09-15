@@ -1,0 +1,11 @@
+﻿health_up=True
+student login OK
+quiz returned 3 questions
+submit: score=67 total=3 comment_len=270
+history count=1
+recommend: currentLevel=2 nextLevel=3 items=3
+bind-status bound=False
+parent login OK
+parent children count=0 first=
+report: assessmentCount= recordCount= mastery_keys=
+=== ALL DONE ===

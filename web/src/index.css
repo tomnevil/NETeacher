@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  /* 规范 §2 背景 #F7F9FC */
+  font-family: 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  background: #f7f9fc;
+  color: #1f2937;
+}
+
+/* 规范 §3 低龄友好：文本对比度 / 触控目标 */
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}

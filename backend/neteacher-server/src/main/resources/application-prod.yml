@@ -1,0 +1,36 @@
+# 生产/容器环境配置（配合 docker-compose 使用）。
+# 通过 `java -jar neteacher-server.jar --spring.profiles.active=prod` 激活。
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+  datasource:
+    url: jdbc:mysql://mysql:3306/neteacher?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: neteacher
+    password: neteacher123
+  data:
+    redis:
+      host: redis
+      port: 6379
+    mongodb:
+      uri: mongodb://mongo:27017/neteacher
+
+ai:
+  llm-provider: mock
+  llm:
+    base-url: https://api.deepseek.com/v1
+    api-key: ${AI_LLM_API_KEY:}
+    model: deepseek-chat
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  health:
+    redis:
+      enabled: true

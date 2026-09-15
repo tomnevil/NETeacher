@@ -1,0 +1,23 @@
+﻿{
+    "currentLevel":  4,
+    "nextLevel":  5,
+    "mastery":  {
+                    "reading":  84
+                },
+    "items":  [
+                  {
+                      "courseId":  4,
+                      "title":  "L4 çå¾è¯´è¯",
+                      "category":  "EXTENSION",
+                      "level":  4,
+                      "reason":  "å¹é\u0085å½åç­çº§ L4"
+                  },
+                  {
+                      "courseId":  5,
+                      "title":  "L5 é\u0085è¯»è¿é¶",
+                      "category":  "MAJOR",
+                      "level":  5,
+                      "reason":  "å²åºä¸ä¸ç­çº§ L5"
+                  }
+              ]
+}

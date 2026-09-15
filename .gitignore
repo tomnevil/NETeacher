@@ -1,0 +1,44 @@
+# ============ Java / Maven ============
+target/
+build/
+out/
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven wrapper cache (keep mvnw script itself)
+.mvn/
+
+# ============ Node ============
+node_modules/
+dist/
+.vite/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ============ IDE ============
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.project
+.classpath
+.settings/
+
+# ============ OS ============
+.DS_Store
+Thumbs.db
+
+# ============ Tooling / logs ============
+.codebuddy/
+*.log
+
+# ============ Generated / temp ============
+*.tsbuildinfo
+*.err
+web/vite.config.d.ts

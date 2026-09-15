@@ -1,0 +1,16 @@
+﻿=== boot tail ===
+2026-09-14T09:57:48.935+08:00  INFO 24200 --- [neteacher-server] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-14T09:57:52.714+08:00  INFO 24200 --- [neteacher-server] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-14T09:57:53.467+08:00  WARN 24200 --- [neteacher-server] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-09-14T09:57:54.793+08:00  INFO 24200 --- [neteacher-server] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+2026-09-14T09:57:54.903+08:00  INFO 24200 --- [neteacher-server] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2026-09-14T09:57:54.919+08:00  INFO 24200 --- [neteacher-server] [           main] com.neteacher.server.ServerApplication   : Started ServerApplication in 12.587 seconds (process running for 13.179)
+=== health ===
+health=UP
+=== login ===
+login code=0 uid=1 token_len=193
+=== me (auth) ===
+me=æ¼ç¤ºå­¦å role=STUDENT phone=13800000000
+=== courses ===
+ERR 无法对 Null 数组进行索引。
+=== done ===
