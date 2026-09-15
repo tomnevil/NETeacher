@@ -21,6 +21,7 @@ import StudentRoster from './pages/StudentRoster'
 import NotFound from './pages/NotFound'
 import Placement from './pages/Placement'
 import Exercise from './pages/Exercise'
+import QuestionBank from './pages/QuestionBank'
 
 export default function App() {
   return (
@@ -39,6 +40,7 @@ export default function App() {
         <Route index element={<TeacherDashboard />} />
         <Route path="admin" element={<ClassAdmin />} />
         <Route path="students" element={<StudentRoster />} />
+        <Route path="questions" element={<QuestionBank />} />
       </Route>
 
       {/* 学生端 */}

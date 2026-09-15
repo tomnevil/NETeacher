@@ -347,3 +347,62 @@ export interface ForbiddenHours {
   forbiddenStart: number
   forbiddenEnd: number
 }
+
+// ---------- 题库管理（ops 模块） ----------
+export type QuestionStatus = 'draft' | 'reviewed' | 'published'
+export type QuestionSource = 'teacher' | 'ai' | 'imported' | 'seeded'
+
+export interface QuestionBankItem {
+  id: number
+  level: number | null
+  subject: string
+  type: string
+  stem: string
+  options: string[]
+  answer: string
+  analysis: string | null
+  knowledgePoint: string | null
+  mediaUrl: string | null
+  usage: string | null
+  status: QuestionStatus
+  source: QuestionSource
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface QuestionUpsert {
+  level: number | null
+  subject: string
+  type: string
+  stem: string
+  options: string[]
+  answer: string
+  analysis?: string
+  knowledgePoint?: string
+  mediaUrl?: string
+  usage?: string
+  status: QuestionStatus
+  source?: QuestionSource
+}
+
+export interface ImportResult {
+  imported: number
+  skipped: number
+  errors: string[]
+}
+
+export interface CoverageStat {
+  level: number
+  subject: string
+  total: number
+  published: number
+  draft: number
+}
+
+export interface PageResult<T> {
+  content: T[]
+  totalElements: number
+  totalPages: number
+  number: number
+  size: number
+}
