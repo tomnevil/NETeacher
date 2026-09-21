@@ -394,9 +394,28 @@ export interface ImportResult {
 export interface CoverageStat {
   level: number
   subject: string
+  /** 按知识点维度统计时返回，此时 subject 为空字符串/null */
+  knowledgePoint?: string | null
   total: number
   published: number
   draft: number
+}
+
+/** AI 出题请求条件 */
+export interface QuestionGenRequest {
+  level?: number
+  subject?: string
+  knowledgePoint?: string
+  usage?: string
+  type?: string
+  count?: number
+}
+
+export interface GenerateResult {
+  /** 实际出题提供方，如 mock / deepseek */
+  provider: string
+  generated: number
+  questions: QuestionBankItem[]
 }
 
 export interface PageResult<T> {

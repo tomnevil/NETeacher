@@ -1,9 +1,11 @@
 package com.neteacher.ops.controller;
 
+import com.neteacher.common.ai.QuestionGenRequest;
 import com.neteacher.common.exception.BizException;
 import com.neteacher.common.exception.ErrorCode;
 import com.neteacher.common.result.Result;
 import com.neteacher.ops.dto.CoverageDTO;
+import com.neteacher.ops.dto.GenerateResultDTO;
 import com.neteacher.ops.dto.ImportResultDTO;
 import com.neteacher.ops.dto.QuestionDTO;
 import com.neteacher.ops.dto.QuestionUpsertDTO;
@@ -128,10 +130,25 @@ public class QuestionBankController {
                 .body(resource);
     }
 
-    /** 覆盖度统计 */
+    /**
+     * 覆盖度统计。
+     *
+     * @param by 聚合维度：subject（默认，等级 × 学科）或 knowledgePoint（等级 × 知识点）
+     */
     @GetMapping("/coverage")
-    public Result<List<CoverageDTO>> coverage(HttpServletRequest req) {
+    public Result<List<CoverageDTO>> coverage(HttpServletRequest req,
+                                              @RequestParam(defaultValue = "subject") String by) {
         requireRole(req, "ADMIN", "TEACHER");
-        return Result.success(service.coverage());
+        return Result.success(service.coverage(by));
+    }
+
+    /** AI 出题：按条件生成题目草稿（落库为 draft / source=ai，需复核后发布） */
+    @PostMapping("/generate")
+    public Result<GenerateResultDTO> generate(HttpServletRequest req, @RequestBody QuestionGenRequest body) {
+        requireRole(req, "ADMIN", "TEACHER");
+        if (body == null) {
+            body = new QuestionGenRequest();
+        }
+        return Result.success(service.generate(body));
     }
 }

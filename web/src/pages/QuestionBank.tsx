@@ -7,10 +7,17 @@ import {
   deleteQuestion,
   importQuestions,
   coverage,
+  generateQuestionDrafts,
   exportQuestions,
   downloadTemplate
 } from '../api/questionBank'
-import type { QuestionBankItem, QuestionUpsert, QuestionStatus, QuestionSource } from '../api/types'
+import type {
+  QuestionBankItem,
+  QuestionUpsert,
+  QuestionGenRequest,
+  QuestionStatus,
+  QuestionSource
+} from '../api/types'
 
 const SUBJECTS = ['listening', 'speaking', 'reading', 'writing', 'word', 'grammar']
 const LEVELS = [1, 2, 3, 4, 5, 6]
@@ -46,6 +53,16 @@ export default function QuestionBank() {
   const [editing, setEditing] = useState<QuestionBankItem | null>(null)
   const [form, setForm] = useState<QuestionUpsert>(emptyForm())
   const [importMsg, setImportMsg] = useState<string>('')
+  const [covBy, setCovBy] = useState<'subject' | 'knowledgePoint'>('subject')
+  const [genMsg, setGenMsg] = useState<string>('')
+  const [gen, setGen] = useState<QuestionGenRequest>({
+    level: 1,
+    subject: 'word',
+    knowledgePoint: '',
+    usage: 'practice',
+    type: 'mcq',
+    count: 5
+  })
   const fileRef = useRef<HTMLInputElement>(null)
 
   const { data, isLoading } = useQuery({
@@ -54,8 +71,8 @@ export default function QuestionBank() {
   })
 
   const { data: cov } = useQuery({
-    queryKey: ['coverage'],
-    queryFn: () => coverage().then((r) => r.data.data)
+    queryKey: ['coverage', covBy],
+    queryFn: () => coverage(covBy).then((r) => r.data.data)
   })
 
   const saveMutation = useMutation({
@@ -85,6 +102,21 @@ export default function QuestionBank() {
       setImportMsg(`导入完成：成功 ${d.imported} 条，跳过 ${d.skipped} 条。` + (d.errors.length ? '\n' + d.errors.slice(0, 5).join('\n') : ''))
     },
     onError: (e: any) => setImportMsg('导入失败：' + (e?.response?.data?.message || e.message))
+  })
+
+  const generateMutation = useMutation({
+    mutationFn: (dto: QuestionGenRequest) => generateQuestionDrafts(dto),
+    onSuccess: (resp) => {
+      qc.invalidateQueries({ queryKey: ['questions'] })
+      qc.invalidateQueries({ queryKey: ['coverage'] })
+      const d = resp.data.data
+      setGenMsg(
+        d.generated > 0
+          ? `已生成并落库 ${d.generated} 条草稿（提供方：${d.provider}）。草稿不会进入抽题与练习，请在下方列表复核后再改为「待发布/已发布」。`
+          : `未生成任何题目（提供方：${d.provider}）。请检查出题配置：mock 为本地模板，真实大模型需配置 ai.llm.api-key 且返回合法 JSON。`
+      )
+    },
+    onError: (e: any) => setGenMsg('AI 出题失败：' + (e?.response?.data?.message || e.message))
   })
 
   const openCreate = () => {
@@ -127,16 +159,109 @@ export default function QuestionBank() {
 
       {/* 覆盖度概览 */}
       <div className="rounded-3xl bg-white p-4 shadow-sm">
-        <div className="mb-2 text-sm font-semibold text-gray-600">覆盖度（等级 × 学科）</div>
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
-          {cov?.map((c) => (
-            <div key={c.level + '-' + c.subject} className="rounded-2xl border border-gray-100 bg-gray-50 p-3">
-              <div className="text-xs text-gray-500">L{c.level} · {c.subject}</div>
-              <div className="mt-1 text-lg font-bold text-indigo-600">{c.total}</div>
-              <div className="text-[11px] text-gray-400">已发布 {c.published} / 草稿 {c.draft}</div>
-            </div>
-          ))}
+        <div className="mb-2 flex items-center justify-between text-sm font-semibold text-gray-600">
+          <span>覆盖度（等级 × {covBy === 'subject' ? '学科' : '知识点'}）</span>
+          <div className="flex gap-1">
+            <button
+              className={`rounded-lg px-2 py-1 text-xs ${covBy === 'subject' ? 'bg-indigo-600 text-white' : 'border border-gray-200'}`}
+              onClick={() => setCovBy('subject')}
+            >
+              按学科
+            </button>
+            <button
+              className={`rounded-lg px-2 py-1 text-xs ${covBy === 'knowledgePoint' ? 'bg-indigo-600 text-white' : 'border border-gray-200'}`}
+              onClick={() => setCovBy('knowledgePoint')}
+            >
+              按知识点
+            </button>
+          </div>
         </div>
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
+          {cov?.map((c) => {
+            const label = covBy === 'subject' ? c.subject : (c.knowledgePoint || '未标注')
+            return (
+              <div key={c.level + '-' + label} className="rounded-2xl border border-gray-100 bg-gray-50 p-3">
+                <div className="truncate text-xs text-gray-500">L{c.level} · {label}</div>
+                <div className="mt-1 text-lg font-bold text-indigo-600">{c.total}</div>
+                <div className="text-[11px] text-gray-400">已发布 {c.published} / 草稿 {c.draft}</div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* AI 出题 */}
+      <div className="rounded-3xl bg-white p-4 shadow-sm">
+        <div className="mb-2 text-sm font-semibold text-gray-600">
+          AI 出题（生成后直接落为草稿 / 来源 ai，需人工复核后发布）
+        </div>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-xs text-gray-500">
+            等级
+            <select
+              className="mt-1 block w-24 rounded-xl border border-gray-200 px-2 py-1.5"
+              value={gen.level ?? 1}
+              onChange={(e) => setGen({ ...gen, level: Number(e.target.value) })}
+            >
+              {LEVELS.map((l) => (
+                <option key={l} value={l}>L{l}</option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs text-gray-500">
+            学科
+            <select
+              className="mt-1 block w-32 rounded-xl border border-gray-200 px-2 py-1.5"
+              value={gen.subject}
+              onChange={(e) => setGen({ ...gen, subject: e.target.value })}
+            >
+              {SUBJECTS.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs text-gray-500">
+            知识点（可选）
+            <input
+              className="mt-1 block w-40 rounded-xl border border-gray-200 px-2 py-1.5"
+              placeholder="如：一般过去时"
+              value={gen.knowledgePoint || ''}
+              onChange={(e) => setGen({ ...gen, knowledgePoint: e.target.value })}
+            />
+          </label>
+          <label className="text-xs text-gray-500">
+            适用场景
+            <input
+              className="mt-1 block w-36 rounded-xl border border-gray-200 px-2 py-1.5"
+              placeholder="practice|unit_test"
+              value={gen.usage || ''}
+              onChange={(e) => setGen({ ...gen, usage: e.target.value })}
+            />
+          </label>
+          <label className="text-xs text-gray-500">
+            数量
+            <input
+              type="number"
+              min={1}
+              max={20}
+              className="mt-1 block w-20 rounded-xl border border-gray-200 px-2 py-1.5"
+              value={gen.count ?? 5}
+              onChange={(e) => setGen({ ...gen, count: Number(e.target.value) })}
+            />
+          </label>
+          <button
+            className="rounded-xl bg-violet-600 px-4 py-2 text-sm text-white disabled:opacity-50"
+            disabled={generateMutation.isPending}
+            onClick={() => generateMutation.mutate(gen)}
+          >
+            {generateMutation.isPending ? '生成中…' : 'AI 生成草稿'}
+          </button>
+        </div>
+        {genMsg && (
+          <div className="mt-3 whitespace-pre-wrap rounded-2xl border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-800">
+            {genMsg}
+          </div>
+        )}
       </div>
 
       {/* 过滤 + 操作 */}

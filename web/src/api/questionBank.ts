@@ -3,6 +3,8 @@ import type {
   Result,
   QuestionBankItem,
   QuestionUpsert,
+  QuestionGenRequest,
+  GenerateResult,
   ImportResult,
   CoverageStat,
   PageResult
@@ -48,8 +50,14 @@ export function importQuestions(file: File) {
   })
 }
 
-export function coverage() {
-  return request.get<Result<CoverageStat[]>>('/ops/questions/coverage')
+/** 覆盖度统计。by=subject（默认，等级 × 学科）或 knowledgePoint（等级 × 知识点） */
+export function coverage(by: 'subject' | 'knowledgePoint' = 'subject') {
+  return request.get<Result<CoverageStat[]>>('/ops/questions/coverage', { params: { by } })
+}
+
+/** AI 出题：生成草稿（status=draft, source=ai），需复核后发布 */
+export function generateQuestionDrafts(dto: QuestionGenRequest) {
+  return request.post<Result<GenerateResult>>('/ops/questions/generate', dto)
 }
 
 function downloadBlob(data: Blob, filename: string) {

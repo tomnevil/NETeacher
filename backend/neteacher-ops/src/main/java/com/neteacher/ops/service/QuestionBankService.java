@@ -5,10 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.neteacher.assessment.entity.Question;
 import com.neteacher.assessment.repository.QuestionRepository;
 import com.neteacher.ops.dto.CoverageDTO;
+import com.neteacher.ops.dto.GenerateResultDTO;
 import com.neteacher.ops.dto.ImportResultDTO;
 import com.neteacher.ops.dto.QuestionDTO;
 import com.neteacher.ops.dto.QuestionUpsertDTO;
 import com.neteacher.ops.util.CsvUtil;
+import com.neteacher.common.ai.QuestionDraft;
+import com.neteacher.common.ai.QuestionGenRequest;
+import com.neteacher.common.ai.QuestionGeneratePort;
 import com.neteacher.common.exception.BizException;
 import com.neteacher.common.exception.ErrorCode;
 import jakarta.transaction.Transactional;
@@ -22,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,11 +41,14 @@ public class QuestionBankService {
 
     private final QuestionRepository questionRepository;
     private final ObjectMapper objectMapper;
+    private final QuestionGeneratePort questionGeneratePort;
 
     @Autowired
-    public QuestionBankService(QuestionRepository questionRepository, ObjectMapper objectMapper) {
+    public QuestionBankService(QuestionRepository questionRepository, ObjectMapper objectMapper,
+                               QuestionGeneratePort questionGeneratePort) {
         this.questionRepository = questionRepository;
         this.objectMapper = objectMapper;
+        this.questionGeneratePort = questionGeneratePort;
     }
 
     /** 列表查询（可选过滤 + 分页） */
@@ -101,6 +109,55 @@ public class QuestionBankService {
             throw new BizException(ErrorCode.NOT_FOUND, "题目不存在: " + id);
         }
         questionRepository.deleteById(id);
+    }
+
+    /** AI 出题：调用出题端口生成内容并落库为草稿（status=draft, source=ai），需人工复核后发布 */
+    @Transactional
+    public GenerateResultDTO generate(QuestionGenRequest req) {
+        GenerateResultDTO result = new GenerateResultDTO();
+        Integer level = req.getLevel() == null ? 1 : req.getLevel();
+        String subject = orDefault(req.getSubject(), "word").trim();
+        String usage = orDefault(req.getUsage(), "practice").trim();
+        String type = orDefault(req.getType(), "mcq").trim();
+        int count = req.getCount() == null ? 5 : Math.min(Math.max(req.getCount(), 1), 20);
+        req.setLevel(level);
+        req.setSubject(subject);
+        req.setUsage(usage);
+        req.setType(type);
+        req.setCount(count);
+
+        List<QuestionDraft> drafts;
+        try {
+            drafts = questionGeneratePort.generate(req);
+        } catch (Exception e) {
+            throw new BizException(ErrorCode.PARAM_INVALID, "AI 出题失败: " + e.getMessage());
+        }
+        result.setProvider(questionGeneratePort.provider());
+        if (drafts == null || drafts.isEmpty()) {
+            // generated 保持 0：模型未返回可解析内容，前端据此提示
+            return result;
+        }
+        for (QuestionDraft d : drafts) {
+            if (d.getStem() == null || d.getStem().isBlank()) {
+                continue;
+            }
+            Question q = new Question();
+            q.setLevel(level);
+            q.setSubject(subject);
+            q.setType(type);
+            q.setStem(d.getStem());
+            q.setUsage(usage);
+            // 生成结果一律先落为草稿，避免未经审核的内容进入抽题与练习
+            q.setStatus("draft");
+            q.setSource("ai");
+            q.setKnowledgePoint(orDefault(d.getKnowledgePoint(), req.getKnowledgePoint()));
+            q.setAnswer(orDefault(d.getAnswer(), ""));
+            q.setAnalysis(d.getAnalysis());
+            q.setOptions(toOptionsJson(d.getOptions()));
+            result.getQuestions().add(toDto(questionRepository.save(q)));
+        }
+        result.setGenerated(result.getQuestions().size());
+        return result;
     }
 
     /** 批量导入 CSV（每行新建一条，跳过非法行并记录原因） */
@@ -188,18 +245,30 @@ public class QuestionBankService {
         return CsvUtil.toCsv(CSV_HEADER, rows);
     }
 
-    /** 覆盖度：等级 × 学科 的题量与发布数 */
-    public List<CoverageDTO> coverage() {
+    /**
+     * 覆盖度统计。默认「等级 × 学科」；by=knowledgePoint 时按「等级 × 知识点」聚合。
+     */
+    public List<CoverageDTO> coverage(String by) {
+        boolean byKnowledge = "knowledgePoint".equalsIgnoreCase(by);
         List<Question> all = questionRepository.findAll();
         Map<String, CoverageDTO> map = new LinkedHashMap<>();
         for (Question q : all) {
             Integer level = q.getLevel() == null ? 0 : q.getLevel();
-            String subject = q.getSubject() == null ? "?" : q.getSubject();
-            String key = level + "|" + subject;
+            String dim;
+            if (byKnowledge) {
+                dim = orDefault(q.getKnowledgePoint(), "未标注");
+            } else {
+                dim = orDefault(q.getSubject(), "?");
+            }
+            String key = level + "|" + dim;
             CoverageDTO dto = map.computeIfAbsent(key, k -> {
                 CoverageDTO c = new CoverageDTO();
                 c.setLevel(level);
-                c.setSubject(subject);
+                if (byKnowledge) {
+                    c.setKnowledgePoint(dim);
+                } else {
+                    c.setSubject(dim);
+                }
                 c.setTotal(0);
                 c.setPublished(0);
                 c.setDraft(0);
@@ -212,7 +281,11 @@ public class QuestionBankService {
                 dto.setDraft(dto.getDraft() + 1);
             }
         }
-        return new ArrayList<>(map.values());
+        List<CoverageDTO> out = new ArrayList<>(map.values());
+        // 稳定排序：等级升序 + 维度名升序，避免插入顺序导致的抖动
+        out.sort(Comparator.comparing(CoverageDTO::getLevel)
+                .thenComparing(c -> c.getSubject() != null ? c.getSubject() : c.getKnowledgePoint()));
+        return out;
     }
 
     // ---------- 内部工具 ----------
@@ -271,6 +344,14 @@ public class QuestionBankService {
 
     private String optionsToCell(String json) {
         return optionsFromJson(json).stream().collect(Collectors.joining(" | "));
+    }
+
+    private String toOptionsJson(List<String> opts) {
+        try {
+            return objectMapper.writeValueAsString(opts == null ? List.of() : opts);
+        } catch (IOException e) {
+            return "[]";
+        }
     }
 
     private String nullToEmpty(String s) {
