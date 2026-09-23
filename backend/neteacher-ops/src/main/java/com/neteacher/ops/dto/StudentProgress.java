@@ -2,6 +2,7 @@ package com.neteacher.ops.dto;
 
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -27,6 +28,9 @@ public class StudentProgress {
 
     /** 薄弱知识点（测评均分<60 的科目） */
     private List<String> weakSubjects;
+
+    /** 薄弱知识点（P3：按知识点聚合正确率 <60% 且样本 >=2 的标签，最弱在前） */
+    private List<String> weakKnowledgePoints = new ArrayList<>();
     /** 是否今日已打卡 */
     private boolean checkedToday;
 }

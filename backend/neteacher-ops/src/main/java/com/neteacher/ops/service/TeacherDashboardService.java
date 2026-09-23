@@ -1,5 +1,6 @@
 package com.neteacher.ops.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.neteacher.assessment.entity.Assessment;
 import com.neteacher.assessment.repository.AssessmentRepository;
 import com.neteacher.common.exception.BizException;
@@ -34,6 +35,7 @@ public class TeacherDashboardService {
     private final TeacherClassRepository teacherClassRepo;
     private final LearningRecordRepository recordRepo;
     private final AssessmentRepository assessmentRepo;
+    private final ObjectMapper objectMapper;
 
     /** 教师负责的班级学情概览 */
     public List<ClassOverview> overviewByTeacher(Long teacherId) {
@@ -85,6 +87,7 @@ public class TeacherDashboardService {
 
         List<StudentProgress> details = new ArrayList<>();
         Map<String, Integer> weakCount = new LinkedHashMap<>();
+        Map<String, Integer> weakKpCount = new LinkedHashMap<>();
         int checkedToday = 0;
 
         for (UserAccount s : students) {
@@ -93,6 +96,9 @@ public class TeacherDashboardService {
             if (sp.isCheckedToday()) checkedToday++;
             for (String w : sp.getWeakSubjects()) {
                 weakCount.merge(w, 1, Integer::sum);
+            }
+            for (String kp : sp.getWeakKnowledgePoints()) {
+                weakKpCount.merge(kp, 1, Integer::sum);
             }
         }
         details.sort(Comparator.comparingDouble(StudentProgress::getOverallLevel).reversed());
@@ -116,8 +122,54 @@ public class TeacherDashboardService {
                 .map(Map.Entry::getKey)
                 .limit(5)
                 .toList());
+        // P3：班级共性薄弱「知识点」（按出现人数降序）
+        ov.setWeakKnowledgePoints(weakKpCount.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .map(Map.Entry::getKey)
+                .limit(5)
+                .toList());
         ov.setStudents(details);
         return ov;
+    }
+
+    /**
+     * P3 弱项下沉：从测评明细中按知识点聚合正确率，
+     * 取「样本不少于 2 题且正确率低于 60%」的知识点，正确率升序（最弱在前）。
+     *
+     * <p>说明：明细中的 knowledgePoint 自本次改动起才写入，历史测评记录不含该字段会被跳过，
+     * 因此该列表会随新测评逐步丰富。</p>
+     */
+    private List<String> weakKnowledgePoints(List<Assessment> asms) {
+        Map<String, int[]> stat = new LinkedHashMap<>();
+        for (Assessment a : asms) {
+            if (a.getDetail() == null || a.getDetail().isBlank()) {
+                continue;
+            }
+            try {
+                List<Map<String, Object>> rows = objectMapper.readValue(a.getDetail(),
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, Map.class));
+                for (Map<String, Object> row : rows) {
+                    Object kp = row.get("knowledgePoint");
+                    if (!(kp instanceof String s) || s.isBlank()) {
+                        continue;
+                    }
+                    int[] st = stat.computeIfAbsent(s, k -> new int[2]);
+                    st[0]++;
+                    if (Boolean.TRUE.equals(row.get("correct"))) {
+                        st[1]++;
+                    }
+                }
+            } catch (Exception ignored) {
+                // 跳过无法解析的明细
+            }
+        }
+        return stat.entrySet().stream()
+                .filter(e -> e.getValue()[0] >= 2)
+                .filter(e -> e.getValue()[1] * 100.0 / e.getValue()[0] < 60)
+                .sorted(Comparator.comparingDouble(e -> e.getValue()[1] * 100.0 / e.getValue()[0]))
+                .map(Map.Entry::getKey)
+                .limit(5)
+                .toList();
     }
 
     private StudentProgress buildStudent(UserAccount s) {
@@ -156,6 +208,7 @@ public class TeacherDashboardService {
         sp.setStreakDays(streakDays(records));
         sp.setCompletedCourses(completed);
         sp.setWeakSubjects(weak);
+        sp.setWeakKnowledgePoints(weakKnowledgePoints(asms));
         sp.setCheckedToday(hasRecordToday(records));
         return sp;
     }

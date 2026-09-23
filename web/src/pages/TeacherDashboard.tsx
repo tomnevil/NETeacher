@@ -120,12 +120,30 @@ export default function TeacherDashboard() {
 
               {active.weakTopics.length > 0 && (
                 <div className="mx-auto mt-3 max-w-5xl rounded-3xl border border-accent-200 bg-accent-50/50 p-4">
-                  <div className="text-sm font-bold text-accent-600">班级共性薄弱点</div>
+                  <div className="text-sm font-bold text-accent-600">班级共性薄弱点（按学科）</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {active.weakTopics.map((w) => (
                       <span
                         key={w}
                         className="rounded-full bg-accent-100 px-3 py-1 text-sm text-accent-700"
+                      >
+                        {w}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {!!active.weakKnowledgePoints?.length && (
+                <div className="mx-auto mt-3 max-w-5xl rounded-3xl border border-rose-200 bg-rose-50/50 p-4">
+                  <div className="text-sm font-bold text-rose-600">
+                    班级共性薄弱知识点（更细粒度）
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {active.weakKnowledgePoints!.map((w) => (
+                      <span
+                        key={w}
+                        className="rounded-full bg-rose-100 px-3 py-1 text-sm text-rose-700"
                       >
                         {w}
                       </span>

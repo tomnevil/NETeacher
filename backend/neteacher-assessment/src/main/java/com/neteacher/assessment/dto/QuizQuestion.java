@@ -21,4 +21,7 @@ public class QuizQuestion {
     private String stem;
 
     private List<String> options;
+
+    /** 知识点标签，用于组卷配比与弱项分析（P3） */
+    private String knowledgePoint;
 }

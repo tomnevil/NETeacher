@@ -271,6 +271,8 @@ export interface StudentProgress {
   streakDays: number
   completedCourses: number
   weakSubjects: string[]
+  /** P3：按知识点粒度的薄弱项（正确率 <60% 且样本 >=2，最弱在前） */
+  weakKnowledgePoints?: string[]
   checkedToday: boolean
 }
 
@@ -285,6 +287,8 @@ export interface ClassOverview {
   avgMinutes: number
   checkedTodayCount: number
   weakTopics: string[]
+  /** P3：班级共性薄弱知识点（按出现人数降序） */
+  weakKnowledgePoints?: string[]
   students: StudentProgress[]
 }
 

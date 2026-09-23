@@ -2,11 +2,14 @@ package com.neteacher.assessment.controller;
 
 import com.neteacher.assessment.dto.AssessmentResult;
 import com.neteacher.assessment.dto.DimensionScore;
+import com.neteacher.assessment.dto.PaperDTO;
+import com.neteacher.assessment.dto.PaperSpec;
 import com.neteacher.assessment.dto.QuizQuestion;
 import com.neteacher.assessment.dto.QuizSubmitRequest;
 import com.neteacher.assessment.dto.WrongQuestion;
 import com.neteacher.assessment.entity.Assessment;
 import com.neteacher.assessment.service.AssessmentService;
+import com.neteacher.assessment.service.PaperService;
 import com.neteacher.common.exception.BizException;
 import com.neteacher.common.exception.ErrorCode;
 import com.neteacher.common.result.Result;
@@ -27,15 +30,36 @@ import java.util.List;
 public class AssessmentController {
 
     private final AssessmentService assessmentService;
+    private final PaperService paperService;
     private final JwtUtil jwtUtil;
 
     @GetMapping("/quiz")
-    @Operation(summary = "抽取一套测评题（可按等级/学科筛选）")
+    @Operation(summary = "抽取一套测评题（可按等级/学科/场景/知识点筛选，仅已发布题目）")
     public Result<List<QuizQuestion>> quiz(
             @RequestParam(required = false) Integer level,
             @RequestParam(required = false) String subject,
+            @RequestParam(required = false) String usage,
+            @RequestParam(required = false) String knowledgePoint,
             @RequestParam(defaultValue = "10") int size) {
-        return Result.success(assessmentService.getQuiz(level, subject, size));
+        return Result.success(assessmentService.getQuiz(level, subject, size, usage, knowledgePoint));
+    }
+
+    @PostMapping("/papers")
+    @Operation(summary = "组卷：按等级/场景/学科配比/知识点抽题并固化")
+    public Result<PaperDTO> composePaper(@RequestBody PaperSpec spec, HttpServletRequest request) {
+        return Result.success(paperService.compose(currentUid(request), spec));
+    }
+
+    @GetMapping("/papers")
+    @Operation(summary = "我组过的卷子")
+    public Result<List<PaperDTO>> myPapers(HttpServletRequest request) {
+        return Result.success(paperService.myPapers(currentUid(request)));
+    }
+
+    @GetMapping("/papers/{id}")
+    @Operation(summary = "读取试卷（含题目明细）")
+    public Result<PaperDTO> getPaper(@PathVariable Long id) {
+        return Result.success(paperService.get(id));
     }
 
     @PostMapping("/quiz/submit")

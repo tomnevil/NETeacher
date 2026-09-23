@@ -35,6 +35,19 @@ public class AssessmentService {
     private final ObjectMapper objectMapper;
 
     public List<QuizQuestion> getQuiz(Integer level, String subject, int size) {
+        return getQuiz(level, subject, size, null, null);
+    }
+
+    /**
+     * 抽题（P3）：
+     * <ul>
+     *   <li>仅抽取已发布题目——草稿（如 AI 生成的待复核题）不会进入练习与测评；</li>
+     *   <li>支持按场景 usage 过滤（Question.usage 为竖线分隔标签，命中任一即可）；</li>
+     *   <li>支持按知识点 knowledgePoint 过滤，用于针对性补弱。</li>
+     * </ul>
+     */
+    public List<QuizQuestion> getQuiz(Integer level, String subject, int size,
+                                      String usage, String knowledgePoint) {
         List<Question> all;
         if (level != null && subject != null) {
             all = questionRepo.findByLevelAndSubject(level, subject);
@@ -45,9 +58,28 @@ public class AssessmentService {
         } else {
             all = questionRepo.findAll();
         }
-        Collections.shuffle(all);
-        int take = size <= 0 ? 10 : Math.min(size, all.size());
-        return all.stream().limit(take).map(this::toQuiz).collect(Collectors.toList());
+        List<Question> pool = all.stream()
+                .filter(q -> "published".equals(q.getStatus()))
+                .filter(q -> usage == null || usage.isBlank() || matchesUsage(q.getUsage(), usage))
+                .filter(q -> knowledgePoint == null || knowledgePoint.isBlank()
+                        || knowledgePoint.equalsIgnoreCase(q.getKnowledgePoint()))
+                .collect(Collectors.toCollection(ArrayList::new));
+        Collections.shuffle(pool);
+        int take = size <= 0 ? 10 : Math.min(size, pool.size());
+        return pool.stream().limit(take).map(this::toQuiz).collect(Collectors.toList());
+    }
+
+    /** 场景匹配：题目未标注场景视为通用；标注时命中任一竖线分隔标签即可 */
+    private boolean matchesUsage(String questionUsage, String wanted) {
+        if (questionUsage == null || questionUsage.isBlank()) {
+            return true;
+        }
+        for (String part : questionUsage.split("\\|")) {
+            if (part.trim().equalsIgnoreCase(wanted)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public AssessmentResult submit(Long userId, QuizSubmitRequest req) {
@@ -88,6 +120,8 @@ public class AssessmentService {
             row.put("userAnswer", ans.get(q.getId()));
             row.put("correct", ok);
             row.put("explanation", q.getAnalysis());
+            // P3：记录知识点，供弱项分析下沉到知识点粒度
+            row.put("knowledgePoint", q.getKnowledgePoint());
             detail.add(row);
         }
         int score = total == 0 ? 0 : (int) Math.round(correct * 100.0 / total);
@@ -245,6 +279,7 @@ public class AssessmentService {
         dto.setSubject(q.getSubject());
         dto.setType(q.getType());
         dto.setStem(q.getStem());
+        dto.setKnowledgePoint(q.getKnowledgePoint());
         try {
             dto.setOptions(objectMapper.readValue(q.getOptions() == null ? "[]" : q.getOptions(),
                     objectMapper.getTypeFactory().constructCollectionType(List.class, String.class)));
