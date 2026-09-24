@@ -18,6 +18,9 @@ public class QuizSubmitRequest {
     /** quiz / unit / stage */
     private String type = "quiz";
 
+    /** 所属作业 id（FR-TRK-010），为空表示非作业提交 */
+    private Long assignmentId;
+
     @NotNull(message = "答题不能为空")
     private List<AnswerItem> answers;
 

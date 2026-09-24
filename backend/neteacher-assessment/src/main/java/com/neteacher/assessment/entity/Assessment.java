@@ -37,4 +37,7 @@ public class Assessment extends BaseEntity {
     @Lob
     @Column(columnDefinition = "TEXT")
     private String detail;
+
+    /** 所属作业（FR-TRK-010）；为空表示自主练习，非作业 */
+    private Long assignmentId;
 }

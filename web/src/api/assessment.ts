@@ -1,5 +1,13 @@
 import request from './request'
-import type { Result, QuizQuestion, AssessmentResult, WrongQuestion, DimensionScore } from './types'
+import type {
+  Result,
+  QuizQuestion,
+  AssessmentResult,
+  WrongQuestion,
+  DimensionScore,
+  PaperSpec,
+  PaperDTO
+} from './types'
 
 /** 抽取一组测评题目（含 subject / level 可选筛选） */
 export function getQuiz(params?: { subject?: string; level?: number }) {
@@ -29,4 +37,19 @@ export function listAssessments() {
 /** 能力雷达图：各维度最新得分 */
 export function getAbility() {
   return request.get<Result<DimensionScore[]>>('/assessments/ability')
+}
+
+/** 组卷：按等级 / 场景 / 学科配比 / 知识点抽题并固化 */
+export function composePaper(spec: PaperSpec) {
+  return request.post<Result<PaperDTO>>('/assessments/papers', spec)
+}
+
+/** 我组过的卷子 */
+export function listPapers() {
+  return request.get<Result<PaperDTO[]>>('/assessments/papers')
+}
+
+/** 读取试卷（含题目明细） */
+export function getPaper(id: number) {
+  return request.get<Result<PaperDTO>>(`/assessments/papers/${id}`)
 }

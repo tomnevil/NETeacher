@@ -139,6 +139,8 @@ public class AssessmentService {
         } catch (Exception e) {
             a.setDetail("[]");
         }
+        // FR-TRK-010：记录作业归属，用于作业完成率与学情统计
+        a.setAssignmentId(req.getAssignmentId());
         a = assessmentRepo.save(a);
 
         String comment = llmPort.chat(buildCommentPrompt(req.getSubject(), score, correct, total));

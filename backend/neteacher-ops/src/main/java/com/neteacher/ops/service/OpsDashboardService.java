@@ -11,13 +11,17 @@ import com.neteacher.learning.repository.LearningRecordRepository;
 import com.neteacher.ops.dto.OpsDashboardDTO;
 import com.neteacher.ops.entity.Membership;
 import com.neteacher.ops.repository.MembershipRepository;
+import com.neteacher.user.entity.ClassGroup;
 import com.neteacher.user.entity.UserAccount;
+import com.neteacher.user.repository.ClassGroupRepository;
 import com.neteacher.user.repository.UserAccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +49,7 @@ public class OpsDashboardService {
     private final MembershipRepository membershipRepo;
     private final QuestionRepository questionRepo;
     private final CourseRepository courseRepo;
+    private final ClassGroupRepository classGroupRepo;
     private final ObjectMapper objectMapper;
 
     public OpsDashboardDTO dashboard() {
@@ -136,7 +141,69 @@ public class OpsDashboardService {
         d.setTotalCourses(totalCourses);
         d.setCourseUsageRate(totalCourses == 0 ? 0 : round1(usedCourses * 100.0 / totalCourses));
 
+        // ---------- 近 14 日趋势 ----------
+        List<OpsDashboardDTO.TrendPoint> trend = new ArrayList<>();
+        for (int i = 13; i >= 0; i--) {
+            LocalDate day = LocalDate.now().minusDays(i);
+            LocalDateTime from = day.atStartOfDay();
+            LocalDateTime to = from.plusDays(1);
+            long dayDau = distinctUsers(records, from, to).size();
+            long daySecs = records.stream()
+                    .filter(r -> inRange(r.getCreatedAt(), from, to))
+                    .mapToLong(r -> r.getDurationSec() == null ? 0 : r.getDurationSec())
+                    .sum();
+            OpsDashboardDTO.TrendPoint p = new OpsDashboardDTO.TrendPoint();
+            p.setDate(day.toString());
+            p.setDau(dayDau);
+            p.setMinutes(round1(daySecs / 60.0));
+            trend.add(p);
+        }
+        d.setTrend(trend);
+
+        // ---------- 按班级下钻 ----------
+        List<OpsDashboardDTO.ClassStat> breakdown = new ArrayList<>();
+        for (ClassGroup cg : classGroupRepo.findAll()) {
+            List<UserAccount> members = students.stream()
+                    .filter(s -> cg.getId().equals(s.getClassId()))
+                    .toList();
+            if (members.isEmpty()) {
+                continue;
+            }
+            Set<Long> memberIds = members.stream().map(UserAccount::getId).collect(Collectors.toSet());
+            long classDau = userIdsInRange(records, todayStart, now, memberIds).size();
+            Set<Long> classActiveWeek = userIdsInRange(records, weekStart, now, memberIds);
+            long classWeeklySecs = records.stream()
+                    .filter(r -> inRange(r.getCreatedAt(), weekStart, now))
+                    .filter(r -> r.getUserId() != null && memberIds.contains(r.getUserId()))
+                    .mapToLong(r -> r.getDurationSec() == null ? 0 : r.getDurationSec())
+                    .sum();
+            long unboundInClass = members.stream().filter(s -> s.getParentId() == null).count();
+
+            OpsDashboardDTO.ClassStat cs = new OpsDashboardDTO.ClassStat();
+            cs.setClassId(cg.getId());
+            cs.setClassName(cg.getName());
+            cs.setStudents(members.size());
+            cs.setDau(classDau);
+            cs.setWeeklyAvgMinutes(classActiveWeek.isEmpty()
+                    ? 0 : round1(classWeeklySecs / 60.0 / classActiveWeek.size()));
+            cs.setUnboundParentRate(round1(unboundInClass * 100.0 / members.size()));
+            breakdown.add(cs);
+        }
+        breakdown.sort(Comparator.comparingLong(OpsDashboardDTO.ClassStat::getStudents).reversed());
+        d.setClassBreakdown(breakdown);
+
         return d;
+    }
+
+    /** 指定时间窗内、且属于给定用户集合的去重用户 */
+    private Set<Long> userIdsInRange(List<LearningRecord> records, LocalDateTime from,
+                                     LocalDateTime to, Set<Long> scope) {
+        return records.stream()
+                .filter(r -> inRange(r.getCreatedAt(), from, to))
+                .map(LearningRecord::getUserId)
+                .filter(Objects::nonNull)
+                .filter(scope::contains)
+                .collect(Collectors.toSet());
     }
 
     private Set<Long> distinctUsers(List<LearningRecord> records, LocalDateTime from, LocalDateTime to) {

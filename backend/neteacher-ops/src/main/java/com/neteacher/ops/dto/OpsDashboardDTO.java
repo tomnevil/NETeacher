@@ -2,7 +2,9 @@ package com.neteacher.ops.dto;
 
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -59,8 +61,39 @@ public class OpsDashboardDTO {
     private double courseUsageRate;
     private long totalCourses;
 
+    // ---------- 趋势与下钻 ----------
+    /** 近 14 日趋势（按天） */
+    private List<TrendPoint> trend = new ArrayList<>();
+
+    /** 按班级下钻 */
+    private List<ClassStat> classBreakdown = new ArrayList<>();
+
     /** PRD §5 目标值，键与本 DTO 的同名字段对应 */
     private Map<String, Double> targets = defaultTargets();
+
+    /** 单日趋势点 */
+    @Data
+    public static class TrendPoint {
+        /** 日期，yyyy-MM-dd */
+        private String date;
+        /** 当日活跃学员 */
+        private long dau;
+        /** 当日总有效学习时长（分钟） */
+        private double minutes;
+    }
+
+    /** 单班级下钻数据 */
+    @Data
+    public static class ClassStat {
+        private Long classId;
+        private String className;
+        private long students;
+        private long dau;
+        /** 该班近 7 日人均学习时长（分钟） */
+        private double weeklyAvgMinutes;
+        /** 该班未绑定家长占比（%） */
+        private double unboundParentRate;
+    }
 
     private static Map<String, Double> defaultTargets() {
         Map<String, Double> t = new LinkedHashMap<>();

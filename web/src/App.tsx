@@ -24,6 +24,8 @@ import Placement from './pages/Placement'
 import Exercise from './pages/Exercise'
 import QuestionBank from './pages/QuestionBank'
 import OpsDashboard from './pages/OpsDashboard'
+import PaperCompose from './pages/PaperCompose'
+import Assignments from './pages/Assignments'
 
 export default function App() {
   return (
@@ -42,8 +44,10 @@ export default function App() {
         <Route index element={<TeacherDashboard />} />
         <Route path="admin" element={<ClassAdmin />} />
         <Route path="students" element={<StudentRoster />} />
-        <Route path="questions" element={<QuestionBank />} />
-      </Route>
+            <Route path="questions" element={<QuestionBank />} />
+            <Route path="papers" element={<PaperCompose />} />
+            <Route path="assignments" element={<Assignments />} />
+          </Route>
 
       {/* 运营后台：需 ADMIN 角色 */}
       <Route

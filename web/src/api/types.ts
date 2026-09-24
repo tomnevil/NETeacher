@@ -36,6 +36,35 @@ export interface QuizQuestion {
   stem: string
   options: string[]
   analysis?: string
+  /** 知识点标签（组卷配比与弱项分析） */
+  knowledgePoint?: string | null
+}
+
+/** 组卷请求：等级 + 场景 + 学科配比 + 知识点 */
+export interface PaperSpec {
+  title?: string
+  level?: number
+  usage?: string
+  items?: PaperItem[]
+  knowledgePoints?: string[]
+}
+
+export interface PaperItem {
+  subject: string
+  count: number
+}
+
+/** 组卷结果：固化后的试卷 + 题目明细 + 缺口说明 */
+export interface PaperDTO {
+  id: number
+  title: string
+  level: number
+  usage: string
+  createdBy?: number
+  questionIds: number[]
+  questions: QuizQuestion[]
+  /** 未能凑齐的学科与缺口，如 "word 缺 3 题" */
+  shortfalls: string[]
 }
 
 export interface WrongQuestion {
@@ -276,6 +305,34 @@ export interface StudentProgress {
   checkedToday: boolean
 }
 
+/** 作业（FR-TRK-010） */
+export interface Assignment {
+  id: number
+  paperId: number
+  classId: number
+  teacherId?: number
+  title: string
+  dueAt?: string | null
+  status?: number
+  createdAt?: string
+}
+
+/** 作业统计 */
+export interface AssignmentStats {
+  assignmentId: number
+  title: string
+  paperId: number
+  paperTitle: string
+  classId: number
+  className: string
+  assignedCount: number
+  completedCount: number
+  completionRate: number
+  avgScore: number
+  weakKnowledgePoints: string[]
+  students: { studentId: number; nickname: string; finished: boolean; score: number | null }[]
+}
+
 /** 运营/质量看板（FR-OPS-008），口径对齐 PRD 北极星指标 */
 export interface OpsDashboard {
   totalStudents: number
@@ -300,6 +357,17 @@ export interface OpsDashboard {
   publishedQuestions: number
   courseUsageRate: number
   totalCourses: number
+  /** 近 14 日趋势 */
+  trend: { date: string; dau: number; minutes: number }[]
+  /** 按班级下钻 */
+  classBreakdown: {
+    classId: number
+    className: string
+    students: number
+    dau: number
+    weeklyAvgMinutes: number
+    unboundParentRate: number
+  }[]
   /** PRD §5 目标值 */
   targets: Record<string, number>
 }
