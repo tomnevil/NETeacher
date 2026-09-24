@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import StudentLayout from './layouts/StudentLayout'
 import TeacherLayout from './layouts/TeacherLayout'
+import AdminLayout from './layouts/AdminLayout'
 import RoleGuard from './components/RoleGuard'
 import Login from './pages/Login'
 import Home from './pages/Home'
@@ -22,6 +23,7 @@ import NotFound from './pages/NotFound'
 import Placement from './pages/Placement'
 import Exercise from './pages/Exercise'
 import QuestionBank from './pages/QuestionBank'
+import OpsDashboard from './pages/OpsDashboard'
 
 export default function App() {
   return (
@@ -41,6 +43,18 @@ export default function App() {
         <Route path="admin" element={<ClassAdmin />} />
         <Route path="students" element={<StudentRoster />} />
         <Route path="questions" element={<QuestionBank />} />
+      </Route>
+
+      {/* 运营后台：需 ADMIN 角色 */}
+      <Route
+        path="/admin"
+        element={
+          <RoleGuard allow={['ADMIN']}>
+            <AdminLayout />
+          </RoleGuard>
+        }
+      >
+        <Route index element={<OpsDashboard />} />
       </Route>
 
       {/* 学生端 */}

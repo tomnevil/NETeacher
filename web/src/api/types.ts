@@ -276,6 +276,34 @@ export interface StudentProgress {
   checkedToday: boolean
 }
 
+/** 运营/质量看板（FR-OPS-008），口径对齐 PRD 北极星指标 */
+export interface OpsDashboard {
+  totalStudents: number
+  totalTeachers: number
+  /** 今日活跃学员 */
+  dau: number
+  /** 近 7 日活跃学员 */
+  wau: number
+  /** 北极星：周活跃学员人均有效学习时长（分钟） */
+  weeklyAvgMinutes: number
+  unitTestCompletionRate: number
+  unitTestTotal: number
+  speakingAvgThisMonth: number
+  speakingAvgLastMonth: number
+  speakingMonthlyDelta: number
+  retentionRate: number
+  membershipConversionRate: number
+  paidMembers: number
+  unboundParentRate: number
+  unboundParentStudents: number
+  questionUsageRate: number
+  publishedQuestions: number
+  courseUsageRate: number
+  totalCourses: number
+  /** PRD §5 目标值 */
+  targets: Record<string, number>
+}
+
 export interface ClassOverview {
   classId: number
   className: string

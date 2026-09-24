@@ -4,8 +4,10 @@ import com.neteacher.common.exception.BizException;
 import com.neteacher.common.exception.ErrorCode;
 import com.neteacher.common.result.Result;
 import com.neteacher.common.util.JwtUtil;
+import com.neteacher.ops.dto.OpsDashboardDTO;
 import com.neteacher.ops.entity.Membership;
 import com.neteacher.ops.entity.MembershipPlan;
+import com.neteacher.ops.service.OpsDashboardService;
 import com.neteacher.ops.service.OpsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,7 +25,16 @@ import java.util.Map;
 public class OpsController {
 
     private final OpsService opsService;
+    private final OpsDashboardService dashboardService;
     private final JwtUtil jwtUtil;
+
+    /** 运营/质量看板（FR-OPS-008）：DAU / 留存 / 转化 / 内容使用率，仅管理员可见 */
+    @GetMapping("/dashboard")
+    @Operation(summary = "运营数据看板（对齐 PRD 北极星指标）")
+    public Result<OpsDashboardDTO> dashboard(HttpServletRequest request) {
+        requireRole(request, "ADMIN");
+        return Result.success(dashboardService.dashboard());
+    }
 
     @GetMapping("/plans")
     @Operation(summary = "会员套餐列表")
@@ -45,6 +56,17 @@ public class OpsController {
     @Operation(summary = "我的会员状态")
     public Result<Membership> mine(HttpServletRequest request) {
         return Result.success(opsService.mine(currentUid(request)));
+    }
+
+    private void requireRole(HttpServletRequest req, String... allowed) {
+        Object roleAttr = req.getAttribute("role");
+        String role = roleAttr == null ? null : String.valueOf(roleAttr);
+        for (String a : allowed) {
+            if (a.equalsIgnoreCase(role)) {
+                return;
+            }
+        }
+        throw new BizException(ErrorCode.FORBIDDEN, "需要 " + String.join("/", allowed) + " 角色");
     }
 
     private Long currentUid(HttpServletRequest request) {
