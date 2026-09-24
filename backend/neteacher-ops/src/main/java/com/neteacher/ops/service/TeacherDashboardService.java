@@ -164,7 +164,7 @@ public class TeacherDashboardService {
             }
         }
         return stat.entrySet().stream()
-                .filter(e -> e.getValue()[0] >= 2)
+                .filter(e -> e.getValue()[0] >= 1)
                 .filter(e -> e.getValue()[1] * 100.0 / e.getValue()[0] < 60)
                 .sorted(Comparator.comparingDouble(e -> e.getValue()[1] * 100.0 / e.getValue()[0]))
                 .map(Map.Entry::getKey)
