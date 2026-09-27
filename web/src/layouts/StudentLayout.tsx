@@ -10,6 +10,7 @@ const navItems = [
   { to: '/speaking', label: '口语' },
   { to: '/dialogue', label: '对话' },
   { to: '/records', label: '练习' },
+  { to: '/homework', label: '作业' },
   { to: '/progress', label: '仪表盘' },
   { to: '/parent', label: '家长' },
   { to: '/membership', label: '会员' }

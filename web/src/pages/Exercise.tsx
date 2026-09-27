@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import Card from '../components/ui/Card'
-import { getQuiz, submitQuiz } from '../api/assessment'
+import { getQuiz, getPaper, submitQuiz } from '../api/assessment'
 import type { QuizQuestion, AssessmentResult } from '../api/types'
 
 const LABEL: Record<string, string> = {
@@ -17,6 +17,9 @@ const LEVELS = [1, 2, 3, 4, 5, 6]
 export default function Exercise() {
   const [params] = useSearchParams()
   const subject = (params.get('subject') || 'word').toLowerCase()
+  /** 作业模式：带 paperId 时按试卷作答，带 assignmentId 时提交归属到该作业 */
+  const paperId = params.get('paperId') ? Number(params.get('paperId')) : null
+  const assignmentId = params.get('assignmentId') ? Number(params.get('assignmentId')) : null
   const [level, setLevel] = useState<number>(3)
   const [questions, setQuestions] = useState<QuizQuestion[]>([])
   const [answers, setAnswers] = useState<Record<number, string>>({})
@@ -27,11 +30,21 @@ export default function Exercise() {
   const start = async () => {
     setSubmitting(true)
     try {
-      const res = await getQuiz({ subject, level })
-      const qs = res.data.data
-      if (!qs || qs.length === 0) {
-        alert('该专项暂无数目，换个等级试试～')
-        return
+      let qs: QuizQuestion[]
+      if (paperId !== null) {
+        const res = await getPaper(paperId)
+        qs = res.data.data.questions || []
+        if (qs.length === 0) {
+          alert('该作业暂无题目')
+          return
+        }
+      } else {
+        const res = await getQuiz({ subject, level })
+        qs = res.data.data
+        if (!qs || qs.length === 0) {
+          alert('该专项暂无数目，换个等级试试～')
+          return
+        }
       }
       setQuestions(qs)
       setAnswers({})
@@ -50,9 +63,10 @@ export default function Exercise() {
     setSubmitting(true)
     try {
       const res = await submitQuiz({
-        subject,
+        subject: paperId !== null ? questions[0].subject || subject : subject,
         level: questions[0].level,
-        type: 'practice',
+        type: paperId !== null ? 'unit_test' : 'practice',
+        assignmentId: assignmentId ?? undefined,
         answers: questions.map((q) => ({ questionId: q.id, answer: answers[q.id] }))
       })
       setResult(res.data.data)
@@ -64,30 +78,36 @@ export default function Exercise() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold text-brand-800">{LABEL[subject] ?? subject}专项练习</h1>
+      <h1 className="text-2xl font-bold text-brand-800">
+        {paperId !== null ? '作业练习' : `${LABEL[subject] ?? subject}专项练习`}
+      </h1>
 
       {active === 'config' && !result && (
         <Card>
-          <div className="font-semibold text-brand-800 mb-3">选择练习等级</div>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {LEVELS.map((l) => (
-              <button
-                key={l}
-                onClick={() => setLevel(l)}
-                className={`rounded-full px-4 py-2 text-sm ${
-                  level === l ? 'bg-brand-600 text-white' : 'border border-brand-200 text-brand-700'
-                }`}
-              >
-                L{l}
-              </button>
-            ))}
+          <div className="font-semibold text-brand-800 mb-3">
+            {paperId !== null ? `按试卷 #${paperId} 作答` : '选择练习等级'}
           </div>
+          {paperId === null && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {LEVELS.map((l) => (
+                <button
+                  key={l}
+                  onClick={() => setLevel(l)}
+                  className={`rounded-full px-4 py-2 text-sm ${
+                    level === l ? 'bg-brand-600 text-white' : 'border border-brand-200 text-brand-700'
+                  }`}
+                >
+                  L{l}
+                </button>
+              ))}
+            </div>
+          )}
           <button
             onClick={start}
             disabled={submitting}
             className="bg-brand-600 hover:bg-brand-700 text-white rounded-2xl px-6 py-2.5 disabled:opacity-50"
           >
-            {submitting ? '加载中…' : '开始练习'}
+            {submitting ? '加载中…' : paperId !== null ? '开始作业' : '开始练习'}
           </button>
         </Card>
       )}
@@ -96,7 +116,8 @@ export default function Exercise() {
         <Card>
           <div className="flex justify-between items-center mb-4">
             <div className="font-semibold text-brand-800">
-              {questions.length} 道题 · {LABEL[subject]} · L{questions[0]?.level}
+              {questions.length} 道题 · {paperId !== null ? '作业' : LABEL[subject]} · L
+              {questions[0]?.level}
             </div>
             <button className="text-sm text-gray-400" onClick={() => setActive('config')}>
               退出

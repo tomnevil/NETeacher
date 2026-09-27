@@ -8,6 +8,9 @@ import com.neteacher.assessment.repository.QuestionRepository;
 import com.neteacher.course.repository.CourseRepository;
 import com.neteacher.learning.entity.LearningRecord;
 import com.neteacher.learning.repository.LearningRecordRepository;
+import com.neteacher.common.exception.BizException;
+import com.neteacher.common.exception.ErrorCode;
+import com.neteacher.ops.dto.ClassDrilldownDTO;
 import com.neteacher.ops.dto.OpsDashboardDTO;
 import com.neteacher.ops.entity.Membership;
 import com.neteacher.ops.repository.MembershipRepository;
@@ -23,6 +26,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -193,6 +197,100 @@ public class OpsDashboardService {
         d.setClassBreakdown(breakdown);
 
         return d;
+    }
+
+    /**
+     * 按班级下钻到学生明细：近 7 日学习时长、活跃天数、家长绑定与薄弱知识点。
+     *
+     * <p>学员按时长升序（最需要关注的在前），便于运营/教师定位到具体人。</p>
+     */
+    public ClassDrilldownDTO classDrilldown(Long classId) {
+        ClassGroup cg = classGroupRepo.findById(classId)
+                .orElseThrow(() -> new BizException(ErrorCode.NOT_FOUND, "班级不存在: " + classId));
+        List<UserAccount> members = userRepo.findByRole(ROLE_STUDENT).stream()
+                .filter(s -> classId.equals(s.getClassId()))
+                .toList();
+        List<LearningRecord> records = recordRepo.findAll();
+        List<Assessment> assessments = assessmentRepo.findAll();
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime weekStart = LocalDate.now().atStartOfDay().minusDays(7);
+
+        ClassDrilldownDTO d = new ClassDrilldownDTO();
+        d.setClassId(cg.getId());
+        d.setClassName(cg.getName());
+        d.setStudents(members.size());
+        d.setUnboundParentCount(members.stream().filter(s -> s.getParentId() == null).count());
+
+        double totalMinutes = 0;
+        List<ClassDrilldownDTO.StudentRow> rows = new ArrayList<>();
+        for (UserAccount s : members) {
+            List<LearningRecord> mine = records.stream()
+                    .filter(r -> s.getId().equals(r.getUserId()))
+                    .filter(r -> inRange(r.getCreatedAt(), weekStart, now))
+                    .toList();
+            long secs = mine.stream()
+                    .mapToLong(r -> r.getDurationSec() == null ? 0 : r.getDurationSec())
+                    .sum();
+            long days = mine.stream()
+                    .map(r -> r.getCreatedAt() == null ? null : r.getCreatedAt().toLocalDate())
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .count();
+            LocalDateTime last = mine.stream()
+                    .map(LearningRecord::getCreatedAt)
+                    .filter(Objects::nonNull)
+                    .max(LocalDateTime::compareTo)
+                    .orElse(null);
+
+            ClassDrilldownDTO.StudentRow row = new ClassDrilldownDTO.StudentRow();
+            row.setStudentId(s.getId());
+            row.setNickname(s.getNickname());
+            row.setWeeklyMinutes(round1(secs / 60.0));
+            row.setActiveDays(days);
+            row.setLastActiveAt(last);
+            row.setUnboundParent(s.getParentId() == null);
+            row.setWeakKnowledgePoints(weakKpOf(assessments, s.getId()));
+            rows.add(row);
+            totalMinutes += secs / 60.0;
+        }
+        rows.sort(Comparator.comparingDouble(ClassDrilldownDTO.StudentRow::getWeeklyMinutes));
+        d.setRows(rows);
+        d.setWeeklyAvgMinutes(members.isEmpty() ? 0 : round1(totalMinutes / members.size()));
+        return d;
+    }
+
+    /** 某学生的薄弱知识点：按知识点聚合正确率，取低于 60% 的，最弱在前 */
+    private List<String> weakKpOf(List<Assessment> assessments, Long uid) {
+        Map<String, int[]> stat = new LinkedHashMap<>();
+        for (Assessment a : assessments) {
+            if (!uid.equals(a.getUserId()) || a.getDetail() == null || a.getDetail().isBlank()) {
+                continue;
+            }
+            try {
+                List<Map<String, Object>> rows = objectMapper.readValue(a.getDetail(),
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, Map.class));
+                for (Map<String, Object> row : rows) {
+                    Object kp = row.get("knowledgePoint");
+                    if (!(kp instanceof String name) || name.isBlank()) {
+                        continue;
+                    }
+                    int[] st = stat.computeIfAbsent(name, k -> new int[2]);
+                    st[0]++;
+                    if (Boolean.TRUE.equals(row.get("correct"))) {
+                        st[1]++;
+                    }
+                }
+            } catch (Exception ignored) {
+                // 跳过无法解析的明细
+            }
+        }
+        return stat.entrySet().stream()
+                .filter(e -> e.getValue()[1] * 100.0 / e.getValue()[0] < 60)
+                .sorted(Comparator.comparingDouble(e -> e.getValue()[1] * 100.0 / e.getValue()[0]))
+                .map(Map.Entry::getKey)
+                .limit(5)
+                .toList();
     }
 
     /** 指定时间窗内、且属于给定用户集合的去重用户 */

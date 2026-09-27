@@ -6,7 +6,8 @@ import type {
   OpsDashboard,
   Assignment,
   AssignmentStats,
-  ClassOverview
+  ClassOverview,
+  ClassDrilldown
 } from './types'
 
 /** 会员套餐列表 */
@@ -54,7 +55,12 @@ export function assignmentStats(id: number) {
   return request.get<Result<AssignmentStats>>(`/teacher/assignments/${id}/stats`)
 }
 
-/** 我的作业（学生端） */
+/** 我的作业（学生端）：含完成状态与逾期标记，逾期未完成排最前 */
 export function myHomework() {
   return request.get<Result<Assignment[]>>('/assignments/mine')
+}
+
+/** 运营看板：按班级下钻到学员明细（仅 ADMIN） */
+export function classDrilldown(classId: number) {
+  return request.get<Result<ClassDrilldown>>(`/ops/dashboard/class/${classId}`)
 }

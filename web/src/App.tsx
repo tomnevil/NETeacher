@@ -26,6 +26,7 @@ import QuestionBank from './pages/QuestionBank'
 import OpsDashboard from './pages/OpsDashboard'
 import PaperCompose from './pages/PaperCompose'
 import Assignments from './pages/Assignments'
+import Homework from './pages/Homework'
 
 export default function App() {
   return (
@@ -85,6 +86,7 @@ export default function App() {
         <Route path="progress" element={<Progress />} />
         <Route path="membership" element={<Membership />} />
         <Route path="special" element={<SpecialTraining />} />
+        <Route path="homework" element={<Homework />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

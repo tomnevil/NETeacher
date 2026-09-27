@@ -7,6 +7,7 @@ import com.neteacher.assessment.repository.PaperRepository;
 import com.neteacher.common.exception.BizException;
 import com.neteacher.common.exception.ErrorCode;
 import com.neteacher.ops.dto.AssignmentCreateDTO;
+import com.neteacher.ops.dto.AssignmentItemDTO;
 import com.neteacher.ops.dto.AssignmentStatsDTO;
 import com.neteacher.ops.entity.Assignment;
 import com.neteacher.ops.repository.AssignmentRepository;
@@ -17,6 +18,7 @@ import com.neteacher.user.repository.UserAccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -130,8 +132,67 @@ public class AssignmentService {
         dto.setCompletedCount(completed);
         dto.setCompletionRate(students.isEmpty() ? 0 : round1(completed * 100.0 / students.size()));
         dto.setAvgScore(completed == 0 ? 0 : round1(scoreSum * 1.0 / completed));
+
+        // 逾期提醒：已过截止时间且仍有学生未完成
+        long unfinished = students.size() - completed;
+        dto.setDueAt(a.getDueAt());
+        dto.setUnfinishedCount(unfinished);
+        dto.setOverdue(a.getDueAt() != null && LocalDateTime.now().isAfter(a.getDueAt()) && unfinished > 0);
+
         dto.setWeakKnowledgePoints(weakKnowledgePoints(submissions));
         return dto;
+    }
+
+    /**
+     * 学生作业列表：附带该学生自己的完成情况与逾期状态，逾期的排在最前。
+     */
+    public List<AssignmentItemDTO> listForStudentItems(Long studentId) {
+        UserAccount me = userRepo.findById(studentId)
+                .orElseThrow(() -> new BizException(ErrorCode.NOT_FOUND, "用户不存在: " + studentId));
+        if (me.getClassId() == null) {
+            return List.of();
+        }
+        List<Assignment> list = assignmentRepo.findByClassIdOrderByCreatedAtDesc(me.getClassId());
+
+        // 该学生已提交的作业 → 最近一次提交
+        Map<Long, Assessment> myLatest = new LinkedHashMap<>();
+        for (Assessment s : assessmentRepo.findAll()) {
+            if (!studentId.equals(s.getUserId()) || s.getAssignmentId() == null) {
+                continue;
+            }
+            Assessment cur = myLatest.get(s.getAssignmentId());
+            if (cur == null || isAfter(s.getCreatedAt(), cur.getCreatedAt())) {
+                myLatest.put(s.getAssignmentId(), s);
+            }
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        List<AssignmentItemDTO> items = new ArrayList<>();
+        for (Assignment a : list) {
+            if (a.getStatus() != null && a.getStatus() == 0) {
+                continue;
+            }
+            Assessment sub = myLatest.get(a.getId());
+            boolean finished = sub != null && Boolean.TRUE.equals(sub.getFinished());
+            AssignmentItemDTO it = new AssignmentItemDTO();
+            it.setId(a.getId());
+            it.setTitle(a.getTitle());
+            it.setPaperId(a.getPaperId());
+            it.setClassId(a.getClassId());
+            it.setClassName(classGroupRepo.findById(a.getClassId()).map(ClassGroup::getName).orElse(""));
+            it.setDueAt(a.getDueAt());
+            it.setStatus(a.getStatus());
+            it.setCreatedAt(a.getCreatedAt());
+            it.setFinished(finished);
+            it.setScore(sub == null ? null : sub.getScore());
+            it.setOverdue(!finished && a.getDueAt() != null && now.isAfter(a.getDueAt()));
+            items.add(it);
+        }
+        // 未完成且已逾期 → 未完成 → 已完成，同组内按截止时间升序
+        items.sort(Comparator
+                .comparing((AssignmentItemDTO x) -> x.isOverdue() ? 0 : (x.isFinished() ? 2 : 1))
+                .thenComparing(x -> x.getDueAt() == null ? LocalDateTime.MAX : x.getDueAt()));
+        return items;
     }
 
     /**

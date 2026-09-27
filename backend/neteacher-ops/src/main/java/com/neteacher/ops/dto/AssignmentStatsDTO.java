@@ -2,6 +2,7 @@ package com.neteacher.ops.dto;
 
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +25,13 @@ public class AssignmentStatsDTO {
     private double completionRate;
     /** 已完成者的平均分 */
     private double avgScore;
+
+    /** 截止时间，可为空 */
+    private LocalDateTime dueAt;
+    /** 已过截止时间且仍有学生未完成 */
+    private boolean overdue;
+    /** 未完成人数 */
+    private long unfinishedCount;
 
     /** 本次作业暴露出的薄弱知识点（按错误率降序） */
     private List<String> weakKnowledgePoints = new ArrayList<>();

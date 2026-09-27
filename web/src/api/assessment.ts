@@ -20,6 +20,8 @@ export function submitQuiz(req: {
   level: number
   type?: string
   answers: { questionId: number; answer: string }[]
+  /** 所属作业 id（FR-TRK-010），用于作业完成统计 */
+  assignmentId?: number | null
 }) {
   return request.post<Result<AssessmentResult>>('/assessments/quiz/submit', req)
 }

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { opsDashboard } from '../api/ops'
+import { opsDashboard, classDrilldown } from '../api/ops'
 import type { OpsDashboard as OpsDashboardData } from '../api/types'
 
 interface Metric {
@@ -15,9 +15,15 @@ interface Metric {
 
 export default function OpsDashboard() {
   const [trendMetric, setTrendMetric] = useState<'dau' | 'minutes'>('dau')
+  const [selectedClass, setSelectedClass] = useState<number | null>(null)
   const { data, isLoading, error } = useQuery({
     queryKey: ['opsDashboard'],
     queryFn: () => opsDashboard().then((r) => r.data.data)
+  })
+  const { data: drill } = useQuery({
+    queryKey: ['classDrilldown', selectedClass],
+    enabled: selectedClass !== null,
+    queryFn: () => classDrilldown(selectedClass as number).then((r) => r.data.data)
   })
 
   if (isLoading) {
@@ -168,7 +174,10 @@ export default function OpsDashboard() {
 
       {/* 按班级下钻 */}
       <div className="rounded-3xl bg-white p-4 shadow-sm">
-        <div className="mb-3 text-sm font-semibold text-gray-600">按班级下钻</div>
+        <div className="mb-3 flex items-center justify-between text-sm font-semibold text-gray-600">
+          <span>按班级下钻</span>
+          <span className="text-[11px] font-normal text-gray-400">点击班级行查看学员明细</span>
+        </div>
         {!(d.classBreakdown || []).length ? (
           <div className="text-xs text-gray-400">暂无班级数据</div>
         ) : (
@@ -185,8 +194,19 @@ export default function OpsDashboard() {
               </thead>
               <tbody>
                 {(d.classBreakdown || []).map((c) => (
-                  <tr key={c.classId} className="border-t border-gray-100">
-                    <td className="py-1">{c.className}</td>
+                  <tr
+                    key={c.classId}
+                    onClick={() => setSelectedClass(selectedClass === c.classId ? null : c.classId)}
+                    className={`cursor-pointer border-t border-gray-100 hover:bg-indigo-50 ${
+                      selectedClass === c.classId ? 'bg-indigo-50' : ''
+                    }`}
+                  >
+                    <td className="py-1">
+                      {c.className}
+                      {selectedClass === c.classId && (
+                        <span className="ml-1 text-[10px] text-indigo-500">▾ 展开中</span>
+                      )}
+                    </td>
                     <td className="py-1">{c.students}</td>
                     <td className="py-1">{c.dau}</td>
                     <td className="py-1">{c.weeklyAvgMinutes.toFixed(1)}</td>
@@ -206,6 +226,71 @@ export default function OpsDashboard() {
           </div>
         )}
       </div>
+
+      {/* 学员明细（下钻结果） */}
+      {drill && selectedClass !== null && (
+        <div className="rounded-3xl bg-white p-4 shadow-sm">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="text-sm font-semibold text-gray-600">
+              {drill.className} · 学员明细
+            </div>
+            <div className="text-[11px] text-gray-400">
+              共 {drill.students} 人 · 周人均 {drill.weeklyAvgMinutes.toFixed(1)} 分钟 ·
+              未绑定家长 {drill.unboundParentCount} 人
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="text-gray-400">
+                <tr>
+                  <th className="py-1">学员（时长升序）</th>
+                  <th className="py-1">近 7 日时长（分钟）</th>
+                  <th className="py-1">活跃天数</th>
+                  <th className="py-1">最近学习</th>
+                  <th className="py-1">家长绑定</th>
+                  <th className="py-1">薄弱知识点</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(drill.rows || []).map((r) => (
+                  <tr key={r.studentId} className="border-t border-gray-100">
+                    <td className="py-1">{r.nickname}</td>
+                    <td className="py-1">
+                      <span
+                        className={
+                          r.weeklyMinutes < 120 ? 'text-amber-600' : 'text-emerald-600'
+                        }
+                      >
+                        {r.weeklyMinutes.toFixed(1)}
+                      </span>
+                    </td>
+                    <td className="py-1">{r.activeDays}</td>
+                    <td className="py-1 text-gray-400">
+                      {r.lastActiveAt
+                        ? String(r.lastActiveAt).slice(0, 16).replace('T', ' ')
+                        : '—'}
+                    </td>
+                    <td className="py-1">
+                      <span className={r.unboundParent ? 'text-amber-600' : 'text-emerald-600'}>
+                        {r.unboundParent ? '未绑定' : '已绑定'}
+                      </span>
+                    </td>
+                    <td className="py-1">
+                      {(r.weakKnowledgePoints || []).length ? (
+                        <span className="text-rose-600">
+                          {r.weakKnowledgePoints.join('、')}
+                        </span>
+                      ) : (
+                        <span className="text-gray-300">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       <div className="rounded-3xl bg-white p-4 text-xs text-gray-500 shadow-sm">
         规模：学员 {d.totalStudents} 人 · 教师 {d.totalTeachers} 人

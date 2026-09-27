@@ -315,6 +315,33 @@ export interface Assignment {
   dueAt?: string | null
   status?: number
   createdAt?: string
+  /** 学生端：自己是否已提交 */
+  finished?: boolean
+  /** 学生端：已过截止时间且未提交 */
+  overdue?: boolean
+  /** 学生端：自己得分 */
+  score?: number | null
+  className?: string
+}
+
+/** 运营看板：按班级下钻到学员明细 */
+export interface ClassDrilldown {
+  classId: number
+  className: string
+  students: number
+  weeklyAvgMinutes: number
+  unboundParentCount: number
+  rows: {
+    studentId: number
+    nickname: string
+    /** 近 7 日学习时长（分钟） */
+    weeklyMinutes: number
+    /** 近 7 日活跃天数 */
+    activeDays: number
+    lastActiveAt: string | null
+    unboundParent: boolean
+    weakKnowledgePoints: string[]
+  }[]
 }
 
 /** 作业统计 */
@@ -329,6 +356,12 @@ export interface AssignmentStats {
   completedCount: number
   completionRate: number
   avgScore: number
+  /** 截止时间，可为空 */
+  dueAt?: string | null
+  /** 已过截止时间且仍有学生未完成 */
+  overdue?: boolean
+  /** 未完成人数 */
+  unfinishedCount?: number
   weakKnowledgePoints: string[]
   students: { studentId: number; nickname: string; finished: boolean; score: number | null }[]
 }

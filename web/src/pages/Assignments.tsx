@@ -143,6 +143,7 @@ export default function Assignments() {
                     {a.title}
                     <span className="ml-2 text-[11px] text-gray-400">
                       试卷 #{a.paperId} · 班级 #{a.classId}
+                      {a.dueAt ? ` · 截止 ${fmtDate(a.dueAt)}` : ''}
                     </span>
                   </div>
                   <button
@@ -167,12 +168,29 @@ export default function Assignments() {
 function StatsPanel({ s }: { s: AssignmentStats }) {
   return (
     <div className="mt-3 space-y-3">
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
         <Stat label="应完成" value={`${s.assignedCount} 人`} />
         <Stat label="已完成" value={`${s.completedCount} 人`} />
+        <Stat label="未完成" value={`${s.unfinishedCount ?? 0} 人`} />
         <Stat label="完成率" value={`${s.completionRate.toFixed(1)}%`} />
         <Stat label="平均分" value={s.avgScore.toFixed(1)} />
       </div>
+
+      {s.dueAt && (
+        <div
+          className={`rounded-2xl border p-3 text-xs ${
+            s.overdue
+              ? 'border-amber-300 bg-amber-50 text-amber-800'
+              : 'border-gray-200 bg-gray-50 text-gray-500'
+          }`}
+        >
+          {s.overdue ? (
+            <>⚠️ 已逾期：截止 {fmtDate(s.dueAt)}，仍有 {s.unfinishedCount ?? 0} 人未完成</>
+          ) : (
+            <>截止时间 {fmtDate(s.dueAt)}{s.unfinishedCount ? ` · 待完成 ${s.unfinishedCount} 人` : ' · 全部完成'}</>
+          )}
+        </div>
+      )}
 
       {s.weakKnowledgePoints.length > 0 && (
         <div className="rounded-2xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
@@ -217,6 +235,12 @@ function StatsPanel({ s }: { s: AssignmentStats }) {
       </div>
     </div>
   )
+}
+
+/** 后端返回 LocalDateTime（无时区），按本地时间展示到分钟 */
+function fmtDate(v: string | null | undefined) {
+  if (!v) return ''
+  return String(v).slice(0, 16).replace('T', ' ')
 }
 
 function Stat({ label, value }: { label: string; value: string }) {

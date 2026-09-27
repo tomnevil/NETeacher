@@ -5,6 +5,7 @@ import com.neteacher.common.exception.ErrorCode;
 import com.neteacher.common.result.Result;
 import com.neteacher.common.util.JwtUtil;
 import com.neteacher.ops.dto.AssignmentCreateDTO;
+import com.neteacher.ops.dto.AssignmentItemDTO;
 import com.neteacher.ops.dto.AssignmentStatsDTO;
 import com.neteacher.ops.entity.Assignment;
 import com.neteacher.ops.service.AssignmentService;
@@ -55,10 +56,10 @@ public class AssignmentController {
     }
 
     @GetMapping("/assignments/mine")
-    @Operation(summary = "我的作业（学生端）")
-    public Result<List<Assignment>> mine(HttpServletRequest request) {
+    @Operation(summary = "我的作业（学生端）：含完成状态与逾期标记，逾期未完成排最前")
+    public Result<List<AssignmentItemDTO>> mine(HttpServletRequest request) {
         requireRole(request, "STUDENT");
-        return Result.success(assignmentService.listForStudent(currentUid(request)));
+        return Result.success(assignmentService.listForStudentItems(currentUid(request)));
     }
 
     private void requireRole(HttpServletRequest req, String... allowed) {

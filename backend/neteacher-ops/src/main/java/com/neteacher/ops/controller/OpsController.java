@@ -4,6 +4,7 @@ import com.neteacher.common.exception.BizException;
 import com.neteacher.common.exception.ErrorCode;
 import com.neteacher.common.result.Result;
 import com.neteacher.common.util.JwtUtil;
+import com.neteacher.ops.dto.ClassDrilldownDTO;
 import com.neteacher.ops.dto.OpsDashboardDTO;
 import com.neteacher.ops.entity.Membership;
 import com.neteacher.ops.entity.MembershipPlan;
@@ -34,6 +35,14 @@ public class OpsController {
     public Result<OpsDashboardDTO> dashboard(HttpServletRequest request) {
         requireRole(request, "ADMIN");
         return Result.success(dashboardService.dashboard());
+    }
+
+    /** 运营看板下钻：按班级查看学员明细（近 7 日时长 / 活跃天数 / 家长绑定 / 薄弱知识点） */
+    @GetMapping("/dashboard/class/{classId}")
+    @Operation(summary = "运营数据看板：按班级下钻到学生明细")
+    public Result<ClassDrilldownDTO> classDrilldown(@PathVariable Long classId, HttpServletRequest request) {
+        requireRole(request, "ADMIN");
+        return Result.success(dashboardService.classDrilldown(classId));
     }
 
     @GetMapping("/plans")
