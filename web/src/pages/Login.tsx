@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { login, wechatLogin } from '../api/user'
 import { useAuthStore } from '../store/auth'
+import { homePathOf } from '../utils/homePath'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Card from '../components/ui/Card'
@@ -27,7 +28,7 @@ export default function Login() {
       if (data.code === 0) {
         const u = data.data
         setAuth({ token: u.token, uid: u.uid, nickname: u.nickname, phone, role: u.role, grade: u.grade })
-        nav(u.role === 'TEACHER' ? '/teacher' : '/home')
+        nav(homePathOf(u.role))
       } else {
         setError(data.message)
       }
@@ -46,7 +47,7 @@ export default function Login() {
       if (data.code === 0) {
         const u = data.data
         setAuth({ token: u.token, uid: u.uid, nickname: u.nickname, phone: '', role: u.role, grade: u.grade })
-        nav('/home')
+        nav(homePathOf(u.role))
       } else {
         setError(data.message)
       }

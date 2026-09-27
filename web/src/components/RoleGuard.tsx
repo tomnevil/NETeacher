@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom'
 import { useAuthStore } from '../store/auth'
+import { homePathOf } from '../utils/homePath'
 
 interface Props {
   /** 允许访问的角色；不传表示只要登录即可 */
@@ -18,8 +19,8 @@ export default function RoleGuard({ allow, children }: Props) {
     return <Navigate to="/login" replace />
   }
   if (allow && allow.length > 0 && !allow.includes(role ?? 'STUDENT')) {
-    // 非授权角色 -> 送回各自首页
-    return <Navigate to={role === 'TEACHER' ? '/teacher' : '/home'} replace />
+    // 非授权角色 -> 送回其角色应有的首页（ADMIN 必须回 /admin，否则会与 /home 形成死循环）
+    return <Navigate to={homePathOf(role)} replace />
   }
   return <>{children}</>
 }
