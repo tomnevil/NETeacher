@@ -24,4 +24,7 @@ public class QuizQuestion {
 
     /** 知识点标签，用于组卷配比与弱项分析（P3） */
     private String knowledgePoint;
+
+    /** 学段：PRIMARY 小学 / JUNIOR 初中 */
+    private String stage;
 }

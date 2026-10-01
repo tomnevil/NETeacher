@@ -25,6 +25,13 @@ public class Question extends BaseEntity {
 
     private Integer level;
 
+    /**
+     * 学段：PRIMARY（小学，L1-L4）/ JUNIOR（初中，L5-L6）。
+     *
+     * <p>由 level 派生，用于教师端按学段筛选题目与运营看板按学段聚合。</p>
+     */
+    private String stage;
+
     /** listening / speaking / reading / writing / word / grammar */
     private String subject;
 

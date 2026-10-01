@@ -53,9 +53,13 @@ public class QuestionBankService {
 
     /** 列表查询（可选过滤 + 分页） */
     public Page<QuestionDTO> list(Integer level, String subject, String type, String status,
-                                  String usage, String knowledgePoint, String keyword, int page, int size) {
+                                  String usage, String knowledgePoint, String keyword,
+                                  String stage, int page, int size) {
         Specification<Question> spec = (root, query, cb) -> {
             List<jakarta.persistence.criteria.Predicate> preds = new ArrayList<>();
+            if (stage != null && !stage.isBlank()) {
+                preds.add(cb.equal(root.get("stage"), stage));
+            }
             if (level != null) {
                 preds.add(cb.equal(root.get("level"), level));
             }
@@ -301,6 +305,7 @@ public class QuestionBankService {
         dto.setAnswer(q.getAnswer());
         dto.setAnalysis(q.getAnalysis());
         dto.setKnowledgePoint(q.getKnowledgePoint());
+        dto.setStage(q.getStage());
         dto.setMediaUrl(q.getMediaUrl());
         dto.setUsage(q.getUsage());
         dto.setStatus(q.getStatus());

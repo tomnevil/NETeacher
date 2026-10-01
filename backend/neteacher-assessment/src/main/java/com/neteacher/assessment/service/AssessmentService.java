@@ -82,6 +82,61 @@ public class AssessmentService {
         return false;
     }
 
+    /**
+     * 判分（修复：选项带字母前缀导致的误判）。
+     *
+     * <p>题库中选项常存为 {@code "A. apple"}，而标准答案存为 {@code "A"}；前端提交的
+     * 是用户点选的完整选项文本，因此裸字符串比较会把所有选择题判错。现按以下顺序兼容：</p>
+     * <ol>
+     *   <li>完全相等（忽略大小写）；</li>
+     *   <li>用户提交的是单个选项字母（如 "A"）→ 与标准答案的字母前缀比较；</li>
+     *   <li>双方都带字母前缀（"A. xxx"）→ 比较字母；</li>
+     *   <li>去掉前缀后比较内容（如 "apple" vs "A. apple"，兼容填空题）。</li>
+     * </ol>
+     */
+    private boolean isCorrect(String expected, String actual) {
+        if (expected == null || actual == null) {
+            return false;
+        }
+        String e = expected.trim();
+        String a = actual.trim();
+        if (e.equalsIgnoreCase(a)) {
+            return true;
+        }
+        // 情形 1：用户提交单个选项字母
+        if (a.matches("(?i)^[A-F]$")) {
+            String el = optionLetter(e);
+            return !el.isEmpty() && a.equalsIgnoreCase(el);
+        }
+        // 情形 2：双方都带字母前缀
+        String el = optionLetter(e);
+        String al = optionLetter(a);
+        if (!el.isEmpty() && !al.isEmpty()) {
+            return el.equalsIgnoreCase(al);
+        }
+        // 情形 3：去掉前缀后比较内容
+        return stripOptionPrefix(e).equalsIgnoreCase(stripOptionPrefix(a));
+    }
+
+    /** 取选项的字母前缀；若整串就是单个字母则直接返回，否则无前缀时返回空串 */
+    private String optionLetter(String s) {
+        if (s == null) {
+            return "";
+        }
+        String t = s.trim();
+        if (t.matches("(?i)^[A-F]$")) {
+            return t.toUpperCase();
+        }
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("(?i)^([A-F])\\s*[.、．:：]").matcher(t);
+        return m.find() ? m.group(1).toUpperCase() : "";
+    }
+
+    /** 去掉 "A. "/"A、" 之类的前缀 */
+    private String stripOptionPrefix(String s) {
+        return s == null ? "" : s.replaceFirst("(?i)^[A-F]\\s*[.、．:：]\\s*", "").trim();
+    }
+
     public AssessmentResult submit(Long userId, QuizSubmitRequest req) {
         Map<Long, String> ans = req.getAnswers().stream()
                 .filter(a -> a.getQuestionId() != null)
@@ -95,7 +150,7 @@ public class AssessmentService {
         List<Map<String, Object>> detail = new ArrayList<>();
         List<WrongQuestion> wrongQuestions = new ArrayList<>();
         for (Question q : qs) {
-            boolean ok = Objects.equals(q.getAnswer(), ans.get(q.getId()));
+            boolean ok = isCorrect(q.getAnswer(), ans.get(q.getId()));
             if (ok) {
                 correct++;
             } else {

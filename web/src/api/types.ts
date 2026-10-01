@@ -38,6 +38,8 @@ export interface QuizQuestion {
   analysis?: string
   /** 知识点标签（组卷配比与弱项分析） */
   knowledgePoint?: string | null
+  /** 学段：PRIMARY 小学 / JUNIOR 初中 */
+  stage?: string | null
 }
 
 /** 组卷请求：等级 + 场景 + 学科配比 + 知识点 */

@@ -355,6 +355,10 @@ public class QuestionSeeder implements CommandLineRunner {
                 q.setUsage(DEFAULT_USAGE);
                 changed = true;
             }
+            if (isBlank(q.getStage())) {
+                q.setStage(stageOf(q.getLevel()));
+                changed = true;
+            }
             // 旧种子从未设置来源（落库为实体默认值 teacher），以「知识点为空 + 来源为空或 teacher」识别并纠正
             if (kpBlank && (isBlank(q.getSource()) || "teacher".equals(q.getSource()))) {
                 q.setSource("seeded");
@@ -412,6 +416,7 @@ public class QuestionSeeder implements CommandLineRunner {
     private Question toQuestion(Seed s) {
         Question q = new Question();
         q.setLevel(s.level());
+        q.setStage(stageOf(s.level()));
         q.setSubject(s.subject());
         q.setType("mcq");
         q.setStem(s.stem());
@@ -419,11 +424,20 @@ public class QuestionSeeder implements CommandLineRunner {
         q.setAnswer(s.answer());
         q.setAnalysis(s.analysis());
         q.setKnowledgePoint(s.knowledgePoint());
+        q.setStage(stageOf(s.level()));
         q.setUsage(DEFAULT_USAGE);
         // 种子题默认发布：可直接进入抽题与练习
         q.setStatus("published");
         q.setSource("seeded");
         return q;
+    }
+
+    /** 学段映射：L1-L4 小学，L5-L6 初中 */
+    private static String stageOf(Integer level) {
+        if (level == null) {
+            return "PRIMARY";
+        }
+        return level <= 4 ? "PRIMARY" : "JUNIOR";
     }
 
     private static String defaultKnowledgePoint(String subject) {
