@@ -28,4 +28,6 @@ public class AssignmentItemDTO {
 
     /** 已过截止时间且仍未提交 */
     private boolean overdue;
+    /** 未完成，且将在 24 小时内截止 */
+    private boolean dueSoon;
 }

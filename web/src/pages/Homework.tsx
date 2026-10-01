@@ -17,6 +17,7 @@ export default function Homework() {
 
   const list = data || []
   const overdue = list.filter((a) => a.overdue)
+  const dueSoon = list.filter((a) => a.dueSoon)
 
   return (
     <div className="space-y-4">
@@ -32,6 +33,16 @@ export default function Homework() {
         </div>
       )}
 
+      {/* 截止前提醒：24 小时内到期且未提交 */}
+      {dueSoon.length > 0 && (
+        <div className="rounded-3xl border border-sky-300 bg-sky-50 p-4">
+          <div className="text-sm font-bold text-sky-700">
+            ⏰ 你有 {dueSoon.length} 项作业即将截止（24 小时内）
+          </div>
+          <div className="mt-1 text-xs text-sky-700">{dueSoon.map((a) => a.title).join('、')}</div>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="text-sm text-gray-400">加载中…</div>
       ) : !list.length ? (
@@ -42,7 +53,7 @@ export default function Homework() {
             <div
               key={a.id}
               className={`rounded-3xl bg-white p-4 shadow-sm ${
-                a.overdue ? 'ring-1 ring-amber-300' : ''
+                a.overdue ? 'ring-1 ring-amber-300' : a.dueSoon ? 'ring-1 ring-sky-300' : ''
               }`}
             >
               <div className="flex items-center justify-between gap-3">
@@ -58,6 +69,10 @@ export default function Homework() {
                   {a.overdue ? (
                     <span className="rounded-full bg-amber-100 px-3 py-1 text-xs text-amber-700">
                       已逾期
+                    </span>
+                  ) : a.dueSoon ? (
+                    <span className="rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-700">
+                      即将截止
                     </span>
                   ) : a.finished ? (
                     <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs text-emerald-700">

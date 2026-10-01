@@ -37,6 +37,9 @@ public class AssignmentService {
 
     private static final String ROLE_STUDENT = "STUDENT";
 
+    /** 截止前提醒窗口：距截止时间不足该小时数且未完成时提醒 */
+    private static final long DUE_SOON_HOURS = 24;
+
     private final AssignmentRepository assignmentRepo;
     private final PaperRepository paperRepo;
     private final AssessmentRepository assessmentRepo;
@@ -138,6 +141,7 @@ public class AssignmentService {
         dto.setDueAt(a.getDueAt());
         dto.setUnfinishedCount(unfinished);
         dto.setOverdue(a.getDueAt() != null && LocalDateTime.now().isAfter(a.getDueAt()) && unfinished > 0);
+        dto.setDueSoon(unfinished > 0 && dueSoon(a.getDueAt(), false));
 
         dto.setWeakKnowledgePoints(weakKnowledgePoints(submissions));
         return dto;
@@ -186,13 +190,24 @@ public class AssignmentService {
             it.setFinished(finished);
             it.setScore(sub == null ? null : sub.getScore());
             it.setOverdue(!finished && a.getDueAt() != null && now.isAfter(a.getDueAt()));
+            it.setDueSoon(dueSoon(a.getDueAt(), finished));
             items.add(it);
         }
-        // 未完成且已逾期 → 未完成 → 已完成，同组内按截止时间升序
+        // 已逾期 → 即将截止（24h 内）→ 未完成 → 已完成，同组内按截止时间升序
         items.sort(Comparator
-                .comparing((AssignmentItemDTO x) -> x.isOverdue() ? 0 : (x.isFinished() ? 2 : 1))
+                .comparing((AssignmentItemDTO x) ->
+                        x.isOverdue() ? 0 : (x.isDueSoon() ? 1 : (x.isFinished() ? 3 : 2)))
                 .thenComparing(x -> x.getDueAt() == null ? LocalDateTime.MAX : x.getDueAt()));
         return items;
+    }
+
+    /** 未完成，且截止时间落在未来 24 小时之内 */
+    private boolean dueSoon(LocalDateTime dueAt, boolean finished) {
+        if (finished || dueAt == null) {
+            return false;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        return dueAt.isAfter(now) && !dueAt.isAfter(now.plusHours(DUE_SOON_HOURS));
     }
 
     /**

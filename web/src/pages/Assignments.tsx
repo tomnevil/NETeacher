@@ -181,11 +181,15 @@ function StatsPanel({ s }: { s: AssignmentStats }) {
           className={`rounded-2xl border p-3 text-xs ${
             s.overdue
               ? 'border-amber-300 bg-amber-50 text-amber-800'
-              : 'border-gray-200 bg-gray-50 text-gray-500'
+              : s.dueSoon
+                ? 'border-sky-300 bg-sky-50 text-sky-800'
+                : 'border-gray-200 bg-gray-50 text-gray-500'
           }`}
         >
           {s.overdue ? (
             <>⚠️ 已逾期：截止 {fmtDate(s.dueAt)}，仍有 {s.unfinishedCount ?? 0} 人未完成</>
+          ) : s.dueSoon ? (
+            <>⏰ 即将截止：{fmtDate(s.dueAt)}（24 小时内），仍有 {s.unfinishedCount ?? 0} 人未完成</>
           ) : (
             <>截止时间 {fmtDate(s.dueAt)}{s.unfinishedCount ? ` · 待完成 ${s.unfinishedCount} 人` : ' · 全部完成'}</>
           )}

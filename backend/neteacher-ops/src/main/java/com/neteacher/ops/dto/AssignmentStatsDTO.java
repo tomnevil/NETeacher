@@ -30,6 +30,8 @@ public class AssignmentStatsDTO {
     private LocalDateTime dueAt;
     /** 已过截止时间且仍有学生未完成 */
     private boolean overdue;
+    /** 未截止但将在 24 小时内到期，且仍有学生未完成 */
+    private boolean dueSoon;
     /** 未完成人数 */
     private long unfinishedCount;
 

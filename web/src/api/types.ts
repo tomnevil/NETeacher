@@ -319,6 +319,8 @@ export interface Assignment {
   finished?: boolean
   /** 学生端：已过截止时间且未提交 */
   overdue?: boolean
+  /** 未提交，且将在 24 小时内截止 */
+  dueSoon?: boolean
   /** 学生端：自己得分 */
   score?: number | null
   className?: string
@@ -360,6 +362,8 @@ export interface AssignmentStats {
   dueAt?: string | null
   /** 已过截止时间且仍有学生未完成 */
   overdue?: boolean
+  /** 未截止但将在 24 小时内到期，且仍有学生未完成 */
+  dueSoon?: boolean
   /** 未完成人数 */
   unfinishedCount?: number
   weakKnowledgePoints: string[]
