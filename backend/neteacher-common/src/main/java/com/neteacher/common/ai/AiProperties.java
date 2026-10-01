@@ -11,7 +11,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "ai")
 public class AiProperties {
 
-    /** mock | deepseek | zhipu */
+    /**
+     * mock | 任意非 mock 值（如 deepseek / zhipu / cmecloud）。
+     * 只要不等于 mock 就会装配真实大模型适配器；未配置 apiKey 时该适配器会降级返回提示文本。
+     */
     private String llmProvider = "mock";
 
     private Llm llm = new Llm();
