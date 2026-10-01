@@ -17,6 +17,8 @@ public class QuestionDTO {
     private String answer;
     private String analysis;
     private String knowledgePoint;
+    /** 学段：PRIMARY 小学 / JUNIOR 初中 */
+    private String stage;
     private String mediaUrl;
     /** 适用场景，竖线分隔 */
     private String usage;

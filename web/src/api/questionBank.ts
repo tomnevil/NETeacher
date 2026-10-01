@@ -18,6 +18,8 @@ export interface QuestionQuery {
   usage?: string
   knowledgePoint?: string
   keyword?: string
+  /** 学段：PRIMARY 小学 / JUNIOR 初中 */
+  stage?: string
   page?: number
   size?: number
 }

@@ -501,6 +501,8 @@ export interface QuestionBankItem {
   answer: string
   analysis: string | null
   knowledgePoint: string | null
+  /** 学段：PRIMARY 小学 / JUNIOR 初中 */
+  stage?: string | null
   mediaUrl: string | null
   usage: string | null
   status: QuestionStatus

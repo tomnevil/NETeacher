@@ -47,7 +47,9 @@ const emptyForm = (): QuestionUpsert => ({
 
 export default function QuestionBank() {
   const qc = useQueryClient()
-  const [filters, setFilters] = useState<{ level?: number; subject?: string; status?: string; keyword?: string }>({})
+  const [filters, setFilters] = useState<{
+    level?: number; subject?: string; status?: string; keyword?: string; stage?: string
+  }>({})
   const [page, setPage] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<QuestionBankItem | null>(null)
@@ -266,6 +268,18 @@ export default function QuestionBank() {
 
       {/* 过滤 + 操作 */}
       <div className="flex flex-wrap items-end gap-3 rounded-3xl bg-white p-4 shadow-sm">
+        <label className="text-xs text-gray-500">
+          学段
+          <select
+            className="mt-1 block w-28 rounded-xl border border-gray-200 px-2 py-1.5"
+            value={filters.stage ?? ''}
+            onChange={(e) => setFilters({ ...filters, stage: e.target.value || undefined })}
+          >
+            <option value="">全部</option>
+            <option value="PRIMARY">小学（L1-L4）</option>
+            <option value="JUNIOR">初中（L5-L6）</option>
+          </select>
+        </label>
         <label className="text-xs text-gray-500">
           等级
           <select

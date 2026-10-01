@@ -56,10 +56,12 @@ public class QuestionBankController {
                                           @RequestParam(required = false) String usage,
                                           @RequestParam(required = false) String knowledgePoint,
                                           @RequestParam(required = false) String keyword,
+                                          @RequestParam(required = false) String stage,
                                           @RequestParam(defaultValue = "0") int page,
                                           @RequestParam(defaultValue = "20") int size) {
         requireRole(req, "ADMIN", "TEACHER");
-        return Result.success(service.list(level, subject, type, status, usage, knowledgePoint, keyword, page, size));
+        return Result.success(
+                service.list(level, subject, type, status, usage, knowledgePoint, keyword, stage, page, size));
     }
 
     /** 详情 */
