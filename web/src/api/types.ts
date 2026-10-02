@@ -40,6 +40,8 @@ export interface QuizQuestion {
   knowledgePoint?: string | null
   /** 学段：PRIMARY 小学 / JUNIOR 初中 */
   stage?: string | null
+  /** 听力朗读文本：前端用浏览器 TTS 播报（仅听力题） */
+  ttsText?: string | null
 }
 
 /** 组卷请求：等级 + 场景 + 学科配比 + 知识点 */
