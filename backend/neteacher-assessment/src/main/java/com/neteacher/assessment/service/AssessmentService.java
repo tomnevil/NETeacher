@@ -337,6 +337,8 @@ public class AssessmentService {
         dto.setType(q.getType());
         dto.setStem(q.getStem());
         dto.setKnowledgePoint(q.getKnowledgePoint());
+        dto.setStage(q.getStage());
+        dto.setTtsText(q.getTtsText());
         try {
             dto.setOptions(objectMapper.readValue(q.getOptions() == null ? "[]" : q.getOptions(),
                     objectMapper.getTypeFactory().constructCollectionType(List.class, String.class)));

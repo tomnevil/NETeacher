@@ -14,6 +14,19 @@ const LABEL: Record<string, string> = {
 }
 const LEVELS = [1, 2, 3, 4, 5, 6]
 
+/** 浏览器 TTS：播放听力材料（同一文本重复播放时先取消上一次） */
+function playTts(text: string) {
+  try {
+    window.speechSynthesis.cancel()
+    const u = new SpeechSynthesisUtterance(text)
+    u.lang = 'en-US'
+    u.rate = 0.85
+    window.speechSynthesis.speak(u)
+  } catch {
+    /* 浏览器不支持时静默降级 */
+  }
+}
+
 export default function Exercise() {
   const [params] = useSearchParams()
   const subject = (params.get('subject') || 'word').toLowerCase()
@@ -126,8 +139,19 @@ export default function Exercise() {
           <div className="space-y-5">
             {questions.map((q, i) => (
               <div key={q.id} className="border-b border-brand-50 pb-4">
-                <div className="font-medium text-brand-800 mb-2">
-                  {i + 1}. {q.stem}
+                <div className="font-medium text-brand-800 mb-2 flex items-start gap-2">
+                  <span className="shrink-0">{i + 1}.</span>
+                  <span className="flex-1">{q.stem}</span>
+                  {q.ttsText && (
+                    <button
+                      type="button"
+                      title="播放听力"
+                      onClick={() => playTts(q.ttsText!)}
+                      className="shrink-0 rounded-full bg-brand-100 px-2.5 py-0.5 text-sm text-brand-700"
+                    >
+                      🔊 播放
+                    </button>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   {q.options.map((opt) => (

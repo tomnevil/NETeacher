@@ -77,6 +77,19 @@ export default function Dialogue() {
     setListening(true)
   }
 
+  /** 浏览器 TTS：播报 AI 的英文回复 */
+  const speak = (text: string) => {
+    try {
+      window.speechSynthesis.cancel()
+      const u = new SpeechSynthesisUtterance(text)
+      u.lang = 'en-US'
+      u.rate = 0.9
+      window.speechSynthesis.speak(u)
+    } catch {
+      /* 浏览器不支持时静默降级 */
+    }
+  }
+
   const stopListening = () => {
     recRef.current?.stop()
     setListening(false)
@@ -96,6 +109,7 @@ export default function Dialogue() {
           { role: 'student', content: t, turn: r.turn, score: r.score, fluency: r.fluency, accuracy: r.accuracy, relevance: r.relevance, comment: r.comment },
           { role: 'system', content: r.reply }
         ])
+        speak(r.reply)
       } else {
         setError(data.message)
       }

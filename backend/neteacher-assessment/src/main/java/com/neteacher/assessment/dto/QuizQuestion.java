@@ -27,4 +27,7 @@ public class QuizQuestion {
 
     /** 学段：PRIMARY 小学 / JUNIOR 初中 */
     private String stage;
+
+    /** 听力朗读文本：前端用浏览器 TTS 播报（仅听力题） */
+    private String ttsText;
 }

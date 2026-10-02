@@ -61,6 +61,14 @@ public class Question extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String mediaUrl;
 
+    /**
+     * 听力朗读文本：听力题需要播报的英文材料（单词/对话/短文）。
+     *
+     * <p>当前由前端浏览器 speechSynthesis 播报；后续接云 TTS 时可据此生成音频写入 mediaUrl。</p>
+     */
+    @Column(columnDefinition = "TEXT")
+    private String ttsText;
+
     /** 适用场景，竖线分隔：practice|unit_test|placement */
     private String usage;
 

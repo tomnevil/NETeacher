@@ -44,7 +44,13 @@ public class QuestionSeeder implements CommandLineRunner {
     private final QuestionRepository questionRepo;
 
     private record Seed(int level, String subject, String stem, String options, String answer,
-                        String analysis, String knowledgePoint) {
+                        String analysis, String knowledgePoint, String ttsText) {
+
+        /** 兼容无朗读文本的种子（非听力题，或听音选词类可自动派生） */
+        Seed(int level, String subject, String stem, String options, String answer,
+             String analysis, String knowledgePoint) {
+            this(level, subject, stem, options, answer, analysis, knowledgePoint, null);
+        }
     }
 
     private static final List<Seed> SEEDS = List.of(
@@ -221,13 +227,16 @@ public class QuestionSeeder implements CommandLineRunner {
             // ==================== L4（小学·五六年级） ====================
             new Seed(4, "listening", "听对话：Where does Amy go on Sunday?",
                     "[\"A. She goes to the park.\",\"B. It is Sunday.\",\"C. Yes, she does.\"]", "A",
-                    "问句询问地点，应答需给出地点信息。", "对话理解"),
+                    "问句询问地点，应答需给出地点信息。", "对话理解",
+                    "Where do you go on Sunday, Amy? I go to the park with my mum."),
             new Seed(4, "listening", "听对话：What time is it?",
                     "[\"A. It's seven.\",\"B. It's a clock.\",\"C. Yes, it is.\"]", "A",
-                    "询问时间的应答需给出具体时刻。", "对话理解"),
+                    "询问时间的应答需给出具体时刻。", "对话理解",
+                    "Excuse me, what time is it now? It's seven o'clock."),
             new Seed(4, "listening", "听短文：Tom goes to school by ___.",
                     "[\"A. bike\",\"B. book\",\"C. bag\"]", "A",
-                    "by 后接交通工具，bike 符合语境。", "短文理解"),
+                    "by 后接交通工具，bike 符合语境。", "短文理解",
+                    "Tom lives near his school. Every morning he rides his bike to school."),
             new Seed(4, "speaking", "店员说 “Can I help you?”，最合适的回答是",
                     "[\"A. Yes, I'd like a pen.\",\"B. You're welcome.\",\"C. See you.\"]", "A",
                     "应说明自己想买的物品。", "情景应答"),
@@ -271,13 +280,16 @@ public class QuestionSeeder implements CommandLineRunner {
             // ==================== L5（初中·初一初二） ====================
             new Seed(5, "listening", "听短文：The boy is looking for his ___.",
                     "[\"A. bag\",\"B. desk\",\"C. teacher\"]", "A",
-                    "looking for 表示寻找，常搭配丢失的物品。", "短文理解"),
+                    "looking for 表示寻找，常搭配丢失的物品。", "短文理解",
+                    "Tom can't find his school bag. He looked for it everywhere, but it was not in his room."),
             new Seed(5, "listening", "听短文：Why is Tom late?",
                     "[\"A. He got up late.\",\"B. He is fine.\",\"C. Yes, he did.\"]", "A",
-                    "Why 提问原因，应答需说明原因。", "短文理解"),
+                    "Why 提问原因，应答需说明原因。", "短文理解",
+                    "Tom got up late this morning, so he missed the bus and was late for school."),
             new Seed(5, "listening", "听对话：How will they go there?",
                     "[\"A. By bus.\",\"B. It's far.\",\"C. Yes, they will.\"]", "A",
-                    "How 提问方式，应答需给出交通方式。", "对话理解"),
+                    "How 提问方式，应答需给出交通方式。", "对话理解",
+                    "The museum is far from here. Let's take the bus instead of walking."),
             new Seed(5, "speaking", "想邀请同学一起踢球，应说",
                     "[\"A. Let's play football together.\",\"B. I play football.\",\"C. Football is good.\"]", "A",
                     "Let's ... 是提出邀请的常用句式。", "邀请表达"),
@@ -327,13 +339,16 @@ public class QuestionSeeder implements CommandLineRunner {
             // ---------- L5 追加（初中八年级/初二：比较级、完成时、健康话题） ----------
             new Seed(5, "listening", "听对话：What did Tom do last night?",
                     "[\"A. He watched TV.\",\"B. He is watching TV.\",\"C. He watches TV.\"]", "A",
-                    "last night 提示过去，应答用过去时。", "对话理解"),
+                    "last night 提示过去，应答用过去时。", "对话理解",
+                    "What did you do last night, Tom? I watched an interesting film with my dad."),
             new Seed(5, "listening", "听对话：How long has Mary lived here?",
                     "[\"A. For three years.\",\"B. Three years ago.\",\"C. Yes, she has.\"]", "A",
-                    "How long 提问时间段，用 for + 时间段回答。", "对话理解"),
+                    "How long 提问时间段，用 for + 时间段回答。", "对话理解",
+                    "Mary has lived in this city for three years. She likes it very much."),
             new Seed(5, "listening", "听对话：What's the matter with the boy?",
                     "[\"A. He has a headache.\",\"B. He is happy.\",\"C. It's fine.\"]", "A",
-                    "What's the matter 询问身体状况。", "对话理解"),
+                    "What's the matter 询问身体状况。", "对话理解",
+                    "You don't look well. What's the matter? I have a headache, and I didn't sleep well."),
             new Seed(5, "speaking", "看到朋友不舒服，应说",
                     "[\"A. What's wrong with you?\",\"B. What do you do?\",\"C. How do you do?\"]", "A",
                     "What's wrong with you? 用于关心对方状况。", "关心问候"),
@@ -382,13 +397,16 @@ public class QuestionSeeder implements CommandLineRunner {
             // ==================== L6（初中·初三） ====================
             new Seed(6, "listening", "听短文，选择最佳标题",
                     "[\"A. A Day at School\",\"B. My Cat\",\"C. The Weather\"]", "A",
-                    "短文围绕一天的校园生活展开。", "主旨概括"),
+                    "短文围绕一天的校园生活展开。", "主旨概括",
+                    "My name is Lucy. I want to tell you about my school day. I get up at six thirty, and school starts at eight. After school, I play basketball with my friends."),
             new Seed(6, "listening", "听短文：What is the speaker's advice?",
                     "[\"A. Read more books.\",\"B. Books are cheap.\",\"C. Yes, it is.\"]", "A",
-                    "advice 提问建议，应答需给出建议内容。", "短文理解"),
+                    "advice 提问建议，应答需给出建议内容。", "短文理解",
+                    "Reading is a good habit. If you want to learn English well, you should read more books every day."),
             new Seed(6, "listening", "听对话：Where are they talking?",
                     "[\"A. In a library.\",\"B. It's quiet.\",\"C. Yes, they are.\"]", "A",
-                    "Where 提问地点，应答需给出地点。", "对话理解"),
+                    "Where 提问地点，应答需给出地点。", "对话理解",
+                    "Please keep quiet in here. You can borrow two books at a time, and return them in two weeks."),
             new Seed(6, "speaking", "表达观点：I think reading is ___.",
                     "[\"A. useful\",\"B. a book\",\"C. read\"]", "A",
                     "be 动词后接形容词作表语，说明看法。", "观点表达"),
@@ -443,6 +461,11 @@ public class QuestionSeeder implements CommandLineRunner {
 
     /** 回填历史数据：只补齐空字段，不覆盖已有取值 */
     private void backfill() {
+        // 题干 -> 朗读文本 的映射，用于给已入库的听力题补 ttsText
+        Map<String, String> ttsByStem = SEEDS.stream()
+                .filter(s -> s.ttsText() != null && !s.ttsText().isBlank())
+                .collect(Collectors.toMap(Seed::stem, Seed::ttsText, (a, b) -> a));
+
         List<Question> dirty = new ArrayList<>();
         for (Question q : questionRepo.findAll()) {
             boolean changed = false;
@@ -458,6 +481,16 @@ public class QuestionSeeder implements CommandLineRunner {
             if (isBlank(q.getStage())) {
                 q.setStage(stageOf(q.getLevel()));
                 changed = true;
+            }
+            if (isBlank(q.getTtsText())) {
+                String tts = ttsByStem.get(q.getStem());
+                if (tts == null && isListeningWordQuestion(q)) {
+                    tts = correctOptionText(q.getAnswer(), q.getOptions());
+                }
+                if (tts != null && !tts.isBlank()) {
+                    q.setTtsText(tts);
+                    changed = true;
+                }
             }
             // 旧种子从未设置来源（落库为实体默认值 teacher），以「知识点为空 + 来源为空或 teacher」识别并纠正
             if (kpBlank && (isBlank(q.getSource()) || "teacher".equals(q.getSource()))) {
@@ -524,7 +557,7 @@ public class QuestionSeeder implements CommandLineRunner {
         q.setAnswer(s.answer());
         q.setAnalysis(s.analysis());
         q.setKnowledgePoint(s.knowledgePoint());
-        q.setStage(stageOf(s.level()));
+        q.setTtsText(resolveTtsText(s));
         q.setUsage(DEFAULT_USAGE);
         // 种子题默认发布：可直接进入抽题与练习
         q.setStatus("published");
@@ -550,6 +583,44 @@ public class QuestionSeeder implements CommandLineRunner {
             return TARGET_KEY_STAGE;
         }
         return TARGET_PER_CELL;
+    }
+
+    /** 听力朗读文本：显式配置优先；「听音选词/选字母」类自动派生为正确选项内容 */
+    private String resolveTtsText(Seed s) {
+        if (s.ttsText() != null && !s.ttsText().isBlank()) {
+            return s.ttsText();
+        }
+        if ("listening".equals(s.subject()) && s.stem() != null && s.stem().startsWith("听音")) {
+            return correctOptionText(s.answer(), s.options());
+        }
+        return null;
+    }
+
+    /** 是否「听音选词/选字母」类听力题（题干以「听音」开头，朗读目标词不会泄露答案选项之外的信息） */
+    private boolean isListeningWordQuestion(Question q) {
+        return "listening".equals(q.getSubject()) && q.getStem() != null && q.getStem().startsWith("听音");
+    }
+
+    /**
+     * 从选项 JSON 中取出与答案字母对应的选项内容（去掉 "A. " 前缀）。
+     * 用于「听音选词」类题目：朗读目标单词即听力材料。
+     */
+    private String correctOptionText(String answer, String optionsJson) {
+        if (isBlank(answer) || isBlank(optionsJson)) {
+            return null;
+        }
+        String ans = answer.trim();
+        String opts = optionsJson.trim();
+        if (opts.startsWith("[") && opts.endsWith("]")) {
+            opts = opts.substring(1, opts.length() - 1);
+        }
+        for (String o : opts.split("\",\"")) {
+            String t = o.replace("\"", "").trim();
+            if (t.regionMatches(true, 0, ans, 0, ans.length()) && t.length() > ans.length()) {
+                return t.substring(ans.length()).replaceFirst("^[.、．:：]\\s*", "").trim();
+            }
+        }
+        return null;
     }
 
     private static String defaultKnowledgePoint(String subject) {
