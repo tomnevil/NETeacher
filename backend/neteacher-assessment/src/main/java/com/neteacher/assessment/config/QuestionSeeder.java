@@ -35,8 +35,11 @@ public class QuestionSeeder implements CommandLineRunner {
 
     private static final String DEFAULT_USAGE = "practice|unit_test";
 
-    /** 每个「等级 × 学科」的目标题量 */
+    /** 每个「等级 × 学科」的默认目标题量 */
     private static final int TARGET_PER_CELL = 3;
+
+    /** 重点学段的目标题量：L1（小学一年级）与 L5（初中八年级）各 6 题 */
+    private static final int TARGET_KEY_STAGE = 6;
 
     private final QuestionRepository questionRepo;
 
@@ -82,6 +85,48 @@ public class QuestionSeeder implements CommandLineRunner {
                     "[\"A. am\",\"B. is\",\"C. are\"]", "A", "第一人称 I 搭配 am。", "be 动词"),
             new Seed(1, "grammar", "“He ___ my father.” 应填",
                     "[\"A. is\",\"B. am\",\"C. are\"]", "A", "第三人称单数搭配 is。", "be 动词"),
+
+            // ---------- L1 追加（小学一年级：字母、数字、颜色、家庭、基本句型） ----------
+            new Seed(1, "listening", "听音选字母：/eɪ/",
+                    "[\"A. A\",\"B. E\",\"C. I\"]", "A", "字母 A 的名称音是 /eɪ/。", "字母认读"),
+            new Seed(1, "listening", "听音选词：/red/",
+                    "[\"A. red\",\"B. read\",\"C. ride\"]", "A", "字母 e 在闭音节中发 /e/。", "音素辨音"),
+            new Seed(1, "listening", "听音选词：/ɡəʊ/",
+                    "[\"A. go\",\"B. god\",\"C. got\"]", "A", "o 在开音节中发其字母音 /əʊ/。", "音素辨音"),
+            new Seed(1, "speaking", "向别人介绍自己，应说",
+                    "[\"A. I'm Tom.\",\"B. You are Tom.\",\"C. He is Tom.\"]", "A",
+                    "自我介绍用 I'm + 名字。", "自我介绍"),
+            new Seed(1, "speaking", "想知道眼前的东西是什么，应问",
+                    "[\"A. What's this?\",\"B. Who's this?\",\"C. Where's this?\"]", "A",
+                    "What's this? 用于询问物品。", "情景问答"),
+            new Seed(1, "speaking", "别人对你说 Thank you. 你应回答",
+                    "[\"A. You're welcome.\",\"B. I'm fine.\",\"C. Goodbye.\"]", "A",
+                    "回答感谢用 You're welcome.。", "礼貌用语"),
+            new Seed(1, "reading", "I see a red apple. What do I see?",
+                    "[\"A. A red apple.\",\"B. A green apple.\",\"C. A banana.\"]", "A",
+                    "原文提到 a red apple。", "细节理解"),
+            new Seed(1, "reading", "Tom has a dog. The dog is big. What does Tom have?",
+                    "[\"A. A dog.\",\"B. A cat.\",\"C. A bird.\"]", "A", "原文提到 has a dog。", "细节理解"),
+            new Seed(1, "reading", "B for book, B for bag. 哪个单词以字母 B 开头？",
+                    "[\"A. book\",\"B. cat\",\"C. dog\"]", "A", "book 以字母 B 开头。", "字母与单词"),
+            new Seed(1, "writing", "写出字母 b 的大写形式",
+                    "[\"A. B\",\"B. D\",\"C. P\"]", "A", "b 的大写是 B。", "字母书写"),
+            new Seed(1, "writing", "“apple” 缺少的字母是：a_ple",
+                    "[\"A. p\",\"B. b\",\"C. d\"]", "A", "apple 拼写为 a-p-p-l-e。", "单词拼写"),
+            new Seed(1, "writing", "下列问候语书写正确的是",
+                    "[\"A. Hello!\",\"B. Hllo!\",\"C. Hell!\"]", "A", "Hello 拼写为 H-e-l-l-o。", "单词拼写"),
+            new Seed(1, "word", "“红色的”英文是",
+                    "[\"A. red\",\"B. bed\",\"C. led\"]", "A", "red 意为红色。", "颜色词汇"),
+            new Seed(1, "word", "“猫”的英文是",
+                    "[\"A. cat\",\"B. cap\",\"C. cup\"]", "A", "cat 意为猫。", "动物词汇"),
+            new Seed(1, "word", "数字“三”的英文是",
+                    "[\"A. three\",\"B. tree\",\"C. there\"]", "A", "three 意为三。", "数字词汇"),
+            new Seed(1, "grammar", "“___ name is Tom.” 应填",
+                    "[\"A. My\",\"B. Me\",\"C. I\"]", "A", "修饰名词用形容词性物主代词 My。", "物主代词"),
+            new Seed(1, "grammar", "“This is ___ apple.” 应填",
+                    "[\"A. an\",\"B. a\",\"C. the\"]", "A", "apple 以元音音素开头，用 an。", "冠词"),
+            new Seed(1, "grammar", "“___ are you? — I'm fine.” 应填",
+                    "[\"A. How\",\"B. Who\",\"C. What\"]", "A", "How are you? 用于问候。", "疑问词"),
 
             // ==================== L2（小学·二三年级） ====================
             new Seed(2, "listening", "听音选词：/dɒɡ/",
@@ -279,6 +324,61 @@ public class QuestionSeeder implements CommandLineRunner {
                     "[\"A. have lived\",\"B. lived\",\"C. live\"]", "A",
                     "since 引导的时间状语常与现在完成时连用。", "现在完成时"),
 
+            // ---------- L5 追加（初中八年级/初二：比较级、完成时、健康话题） ----------
+            new Seed(5, "listening", "听对话：What did Tom do last night?",
+                    "[\"A. He watched TV.\",\"B. He is watching TV.\",\"C. He watches TV.\"]", "A",
+                    "last night 提示过去，应答用过去时。", "对话理解"),
+            new Seed(5, "listening", "听对话：How long has Mary lived here?",
+                    "[\"A. For three years.\",\"B. Three years ago.\",\"C. Yes, she has.\"]", "A",
+                    "How long 提问时间段，用 for + 时间段回答。", "对话理解"),
+            new Seed(5, "listening", "听对话：What's the matter with the boy?",
+                    "[\"A. He has a headache.\",\"B. He is happy.\",\"C. It's fine.\"]", "A",
+                    "What's the matter 询问身体状况。", "对话理解"),
+            new Seed(5, "speaking", "看到朋友不舒服，应说",
+                    "[\"A. What's wrong with you?\",\"B. What do you do?\",\"C. How do you do?\"]", "A",
+                    "What's wrong with you? 用于关心对方状况。", "关心问候"),
+            new Seed(5, "speaking", "对方说你喜欢英语，表示“我也是”，应说",
+                    "[\"A. So do I.\",\"B. So am I do.\",\"C. Me too am.\"]", "A",
+                    "肯定句后用 So + 助动词 + 主语 表示“也是”。", "So 句型"),
+            new Seed(5, "speaking", "征求对方对电影的看法，应说",
+                    "[\"A. What do you think of the film?\",\"B. The film is on.\",\"C. Where is the film?\"]", "A",
+                    "What do you think of ...? 用于征求意见。", "征求意见"),
+            new Seed(5, "reading", "The room was spotless; everything was clean. “spotless” 的意思是",
+                    "[\"A. 一尘不染的\",\"B. 有污点的\",\"C. 黑暗的\"]", "A",
+                    "由 everything was clean 可推知。", "词义猜测"),
+            new Seed(5, "reading", "Tom has been to Beijing twice, but he has never been to Shanghai. Tom 去过几次北京？",
+                    "[\"A. Twice.\",\"B. Once.\",\"C. Never.\"]", "A", "原文提到 been to Beijing twice。", "细节理解"),
+            new Seed(5, "reading", "段落讲述 eat well, sleep well, exercise every day... 最佳标题是",
+                    "[\"A. Keeping Healthy\",\"B. My Favorite Food\",\"C. Sports Stars\"]", "A",
+                    "段落围绕健康生活习惯展开。", "主旨大意"),
+            new Seed(5, "writing", "把 I have finished my homework. 改为一般疑问句",
+                    "[\"A. Have you finished your homework?\",\"B. Do you have finished your homework?\",\"C. You have finished your homework?\"]", "A",
+                    "现在完成时变疑问句，把 have 提到句首。", "句式转换"),
+            new Seed(5, "writing", "连词成句：have / they / already / finished / it",
+                    "[\"A. They have already finished it.\",\"B. They have finished already it.\",\"C. Already they have finished it it.\"]", "A",
+                    "already 常置于 have 与过去分词之间。", "语序"),
+            new Seed(5, "writing", "写一张邀请便条的开头，最恰当的是",
+                    "[\"A. Dear Tom,\",\"B. Hi You,\",\"C. To Tom:\"]", "A",
+                    "英文便条/书信开头用 Dear + 收信人 + 逗号。", "应用文写作"),
+            new Seed(5, "word", "“decide” 的名词形式是",
+                    "[\"A. decision\",\"B. decidement\",\"C. decident\"]", "A",
+                    "decide 的名词为 decision（-de 变 -sion）。", "构词法"),
+            new Seed(5, "word", "“ill” 的比较级是",
+                    "[\"A. worse\",\"B. badder\",\"C. more ill\"]", "A",
+                    "ill/bad 的比较级为 worse（不规则变化）。", "不规则变化"),
+            new Seed(5, "word", "“travel” 表示“旅行者”的名词是",
+                    "[\"A. traveler\",\"B. travalor\",\"C. travller\"]", "A",
+                    "travel + l + er 构成“旅行者”。", "构词法"),
+            new Seed(5, "grammar", "“Tom is ___ than his brother.” 应填",
+                    "[\"A. taller\",\"B. tallest\",\"C. tall\"]", "A",
+                    "than 提示两者比较，用比较级。", "比较级"),
+            new Seed(5, "grammar", "“She is ___ of the three girls.” 应填",
+                    "[\"A. the tallest\",\"B. taller\",\"C. tall\"]", "A",
+                    "of the three 提示三者以上比较，用最高级。", "最高级"),
+            new Seed(5, "grammar", "“I don't know ___.” 应填",
+                    "[\"A. what to do\",\"B. what do\",\"C. to do what\"]", "A",
+                    "疑问词 + 不定式可作宾语。", "疑问词 + 不定式"),
+
             // ==================== L6（初中·初三） ====================
             new Seed(6, "listening", "听短文，选择最佳标题",
                     "[\"A. A Day at School\",\"B. My Cat\",\"C. The Weather\"]", "A",
@@ -391,7 +491,7 @@ public class QuestionSeeder implements CommandLineRunner {
         for (Map.Entry<String, List<Seed>> entry : grouped.entrySet()) {
             Seed first = entry.getValue().get(0);
             long existing = questionRepo.countByLevelAndSubject(first.level(), first.subject());
-            int need = TARGET_PER_CELL - (int) existing;
+            int need = targetFor(first.level()) - (int) existing;
             if (need <= 0) {
                 continue;
             }
@@ -438,6 +538,18 @@ public class QuestionSeeder implements CommandLineRunner {
             return "PRIMARY";
         }
         return level <= 4 ? "PRIMARY" : "JUNIOR";
+    }
+
+    /**
+     * 各「等级 × 学科」的目标题量。
+     *
+     * <p>L1（小学一年级）与 L5（初中八年级）为重点学段，每格 6 题；其余默认 3 题。</p>
+     */
+    private static int targetFor(Integer level) {
+        if (level != null && (level == 1 || level == 5)) {
+            return TARGET_KEY_STAGE;
+        }
+        return TARGET_PER_CELL;
     }
 
     private static String defaultKnowledgePoint(String subject) {
